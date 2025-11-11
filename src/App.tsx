@@ -53,6 +53,8 @@ import ReceivingsList from './components/ReceivingsList';
 import UpdateProductPrices from './components/UpdateProductPrices';
 import WarehouseDetails from './components/WarehouseDetails';
 import WarehouseList from './components/WarehouseList';
+import CapillarySalesLines from './components/CapillarySalesLines';
+import CapillarySalesLineDetails from './components/CapillarySalesLineDetails';
 import UserSidebar from './components/UserSidebar';
 import UserProfile from './components/user/UserProfile';
 import UserBusiness from './components/user/UserBusiness';
@@ -130,6 +132,13 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
 						element={<ReceivingDetails />}
 					/>
 					<Route path='warehouses/:id/update-prices' element={<UpdateProductPrices />} />
+
+					{/* Capillary Sales Lines */}
+					<Route path='capillary-sales-lines' element={<CapillarySalesLines />} />
+					<Route
+						path='capillary-sales-lines/:id'
+						element={<CapillarySalesLineDetails />}
+					/>
 
 					{/* Stats */}
 					<Route path='stats' element={<Navigate to='/manage/stats/customers' replace />} />

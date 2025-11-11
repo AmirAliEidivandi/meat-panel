@@ -3624,3 +3624,75 @@ export interface GetFavoriteProductsResponse {
   data: FavoriteProduct[];
   count: number;
 }
+
+export interface GetSellersResponse {
+  id: string;
+  profile_id: string;
+  kid: string;
+  deleted: boolean;
+  locked: boolean;
+  roles: string[];
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  profile: {
+    id: string;
+    kid: string;
+    first_name: string;
+    last_name: string;
+  };
+  capillary_sales_lines: {
+    id: string;
+    title: string;
+    description: string;
+    branch_id: string;
+    line_number: number;
+    deleted: boolean;
+    locked: boolean;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+  }[];
+  branches: {
+    id: string;
+    name: string;
+    address: string;
+    locked: boolean;
+    are_prices_updated: boolean;
+    manager_id: string;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+  }[];
+}
+
+export interface CapillarySalesLineListItem {
+  id: string;
+  title: string;
+  line_number: number;
+  description: string;
+}
+
+export interface GetCapillarySalesLinesResponse {
+  data: CapillarySalesLineListItem[];
+  count: number;
+}
+
+export interface CapillarySalesLineDetails {
+  id: string;
+  title: string;
+  line_number: number;
+  description: string;
+  created_at: string;
+  branch: {
+    name: string;
+  };
+}
+
+export interface QueryCapillarySalesLineDto {
+  page?: number;
+  "page-size"?: number;
+  title?: string;
+  line_number?: number;
+  branch_id?: string;
+}

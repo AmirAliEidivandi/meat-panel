@@ -2,6 +2,7 @@ import {
 	ArrowRight,
 	CheckCircle,
 	CreditCard,
+	Edit,
 	FileText,
 	Loader2,
 	Lock,
@@ -22,6 +23,8 @@ import {
 	paymentService,
 	walletService,
 } from '../services/api';
+import UpdateSellerModal from './UpdateSellerModal';
+import UpdateCapillarySalesLineModal from './UpdateCapillarySalesLineModal';
 import type {
 	CustomerDetails,
 	CustomerTransaction,
@@ -85,6 +88,11 @@ export default function CustomerDetails() {
 	const [transactionsView, setTransactionsView] = useState<
 		'simple' | 'detailed'
 	>('simple');
+
+	// Modals state
+	const [showUpdateSellerModal, setShowUpdateSellerModal] = useState(false);
+	const [showUpdateCapillarySalesLineModal, setShowUpdateCapillarySalesLineModal] =
+		useState(false);
 
 	useEffect(() => {
 		if (customerId) {
@@ -623,25 +631,60 @@ export default function CustomerDetails() {
 							)}
 
 							{/* Seller Info */}
-							{customer.seller && (
-								<div className='bg-white rounded-xl border border-gray-200 p-6'>
-									<div className='flex items-center space-x-reverse space-x-2 mb-5'>
+							<div className='bg-white rounded-xl border border-gray-200 p-6'>
+								<div className='flex items-center justify-between mb-5'>
+									<div className='flex items-center space-x-reverse space-x-2'>
 										<div className='w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center'>
 											<User className='w-4 h-4 text-purple-600' />
 										</div>
 										<h3 className='font-bold text-gray-900'>فروشنده</h3>
 									</div>
-									<div>
-										<p className='text-xs text-gray-500 mb-1.5'>
-											نام و نام خانوادگی
-										</p>
-										<p className='text-sm font-semibold text-gray-900'>
-											{customer.seller.profile.first_name}{' '}
-											{customer.seller.profile.last_name}
-										</p>
-									</div>
+									<button
+										onClick={() => setShowUpdateSellerModal(true)}
+										className='px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-semibold flex items-center space-x-reverse space-x-2'
+									>
+										<Edit className='w-4 h-4' />
+										<span>ویرایش</span>
+									</button>
 								</div>
-							)}
+								<div>
+									<p className='text-xs text-gray-500 mb-1.5'>
+										نام و نام خانوادگی
+									</p>
+									<p className='text-sm font-semibold text-gray-900'>
+										{customer.seller
+											? `${customer.seller.profile.first_name} ${customer.seller.profile.last_name}`
+											: 'تعیین نشده'}
+									</p>
+								</div>
+							</div>
+
+							{/* Capillary Sales Line Info */}
+							<div className='bg-white rounded-xl border border-gray-200 p-6'>
+								<div className='flex items-center justify-between mb-5'>
+									<div className='flex items-center space-x-reverse space-x-2'>
+										<div className='w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center'>
+											<User className='w-4 h-4 text-indigo-600' />
+										</div>
+										<h3 className='font-bold text-gray-900'>خط فروش</h3>
+									</div>
+									<button
+										onClick={() => setShowUpdateCapillarySalesLineModal(true)}
+										className='px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-semibold flex items-center space-x-reverse space-x-2'
+									>
+										<Edit className='w-4 h-4' />
+										<span>ویرایش</span>
+									</button>
+								</div>
+								<div>
+									<p className='text-xs text-gray-500 mb-1.5'>خط فروش</p>
+									<p className='text-sm font-semibold text-gray-900'>
+										{customer.capillary_sales_line
+											? customer.capillary_sales_line.title
+											: 'تعیین نشده'}
+									</p>
+								</div>
+							</div>
 
 							{/* People (Representatives) */}
 							{customer.people && customer.people.length > 0 && (
@@ -1405,6 +1448,32 @@ export default function CustomerDetails() {
 					)}
 				</div>
 			</div>
+
+			{/* Modals */}
+			{customerId && (
+				<>
+					<UpdateSellerModal
+						isOpen={showUpdateSellerModal}
+						onClose={() => setShowUpdateSellerModal(false)}
+						customerId={customerId}
+						currentSellerId={customer.seller?.id}
+						onSuccess={() => {
+							fetchCustomerDetails();
+							setShowUpdateSellerModal(false);
+						}}
+					/>
+					<UpdateCapillarySalesLineModal
+						isOpen={showUpdateCapillarySalesLineModal}
+						onClose={() => setShowUpdateCapillarySalesLineModal(false)}
+						customerId={customerId}
+						currentCapillarySalesLineId={customer.capillary_sales_line?.id}
+						onSuccess={() => {
+							fetchCustomerDetails();
+							setShowUpdateCapillarySalesLineModal(false);
+						}}
+					/>
+				</>
+			)}
 		</div>
 	);
 }

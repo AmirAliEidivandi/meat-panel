@@ -12,6 +12,7 @@ import {
 	Package,
 	Receipt,
 	ShoppingCart,
+	TrendingUp,
 	UserCheck,
 	Users,
 	UserCog,
@@ -138,6 +139,13 @@ const menuItems: MenuItem[] = [
 		icon: Warehouse,
 		color: 'text-amber-600',
 		path: '/manage/warehouses',
+	},
+	{
+		id: 'capillary-sales-lines',
+		label: 'لیست خط فروش',
+		icon: TrendingUp,
+		color: 'text-purple-600',
+		path: '/manage/capillary-sales-lines',
 	},
 	{
 		id: 'stats',

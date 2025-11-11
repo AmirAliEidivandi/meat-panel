@@ -7,6 +7,7 @@ import type {
   AddCustomerInitialBalanceResponse,
   AddFavoriteProductDto,
   AddFavoriteProductResponse,
+  CapillarySalesLineDetails,
   CargoHistory,
   Category,
   ChangeOrderStepDto,
@@ -36,9 +37,11 @@ import type {
   Employee,
   EmployeeInfoResponse,
   FileUploadResponse,
+  GetCapillarySalesLinesResponse,
   GetFavoriteProductsResponse,
   GetMyCartResponse,
   GetProductKardexResponse,
+  GetSellersResponse,
   GroupsListResponse,
   GroupsListWithClientIdResponse,
   InactiveCustomersReportStats,
@@ -67,6 +70,7 @@ import type {
   ProfileListResponse,
   PublicProductDetails,
   PublicProductListResponse,
+  QueryCapillarySalesLineDto,
   QueryCargoHistoryDto,
   QueryCheckDto,
   QueryCustomerDto,
@@ -522,6 +526,46 @@ export const customerService = {
     const response = await api.patch("/customers/info", data);
     return response.data;
   },
+  updateSeller: async (
+    customerId: string,
+    sellerId: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const response = await api.put(`/customers/update-seller/${customerId}`, {
+      seller_id: sellerId,
+    });
+    return response.data;
+  },
+  updateCapillarySalesLine: async (
+    customerId: string,
+    capillarySalesLineId: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const response = await api.put(
+      `/customers/update-capillary-sales-line/${customerId}`,
+      {
+        capillary_sales_line_id: capillarySalesLineId,
+      }
+    );
+    return response.data;
+  },
+};
+
+export const capillarySalesLineService = {
+  getCapillarySalesLines: async (
+    query: QueryCapillarySalesLineDto
+  ): Promise<GetCapillarySalesLinesResponse> => {
+    const response = await api.get("/capillary-sales-lines", {
+      params: {
+        ...query,
+      },
+    });
+    return response.data;
+  },
+  getCapillarySalesLineById: async (
+    id: string
+  ): Promise<CapillarySalesLineDetails> => {
+    const response = await api.get(`/capillary-sales-lines/${id}`);
+    return response.data;
+  },
 };
 
 export const walletService = {
@@ -873,6 +917,10 @@ export const employeeService = {
   },
   getEmployeeInfo: async (): Promise<EmployeeInfoResponse> => {
     const response = await api.get("/employees/info");
+    return response.data;
+  },
+  getSellers: async (): Promise<GetSellersResponse[]> => {
+    const response = await api.get("/employees/sellers");
     return response.data;
   },
 };
