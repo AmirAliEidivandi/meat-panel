@@ -1,7 +1,7 @@
-import { Package, RefreshCw } from "lucide-react";
+import { Loader2, Package, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { formatDate } from "../../lib/utils";
+import { formatCurrency, formatDate } from "../../lib/utils";
 import { myRequestsService } from "../../services/api";
 import type { MyRequestsResponse } from "../../types";
 import Pagination from "../Pagination";
@@ -35,14 +35,6 @@ export default function MyRequests() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("fa-IR", {
-      style: "currency",
-      currency: "IRR",
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const getStatusText = (status: string) => {
@@ -86,43 +78,21 @@ export default function MyRequests() {
     setCurrentPage(page);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-[3px] border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-500 mb-4">{error}</div>
-        <button
-          onClick={fetchRequests}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          تلاش مجدد
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+    <div className="space-y-6 fade-in font-vazir">
+      {/* Header */}
+      <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-reverse space-x-3">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Package className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Package className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900">
                 درخواست‌های من
-              </h2>
-              <p className="text-gray-600 text-sm mt-1">
-                مشاهده و پیگیری درخواست‌های شما
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {totalItems} درخواست ثبت شده
               </p>
             </div>
           </div>
@@ -134,104 +104,135 @@ export default function MyRequests() {
             بروزرسانی
           </button>
         </div>
-
-        {/* Requests List */}
-        {requests.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">هیچ درخواستی یافت نشد</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {requests.map((request, index) => (
-              <div
-                key={request.id}
-                onClick={() => navigate(`/user/requests/${request.id}`)}
-                className="p-6 hover:bg-gray-50 transition-colors duration-200 cursor-pointer rounded-xl border-2 border-gray-200 bg-white shadow-sm hover:shadow-md"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-reverse space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg flex items-center justify-center">
-                      <Package className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">
-                        {request.code
-                          ? `درخواست #${request.code}`
-                          : `درخواست ${request.id.slice(0, 8)}...`}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {formatDate(request.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-reverse space-x-3">
-                    <span
-                      className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(
-                        request.status
-                      )}`}
-                    >
-                      {getStatusText(request.status)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">تعداد محصولات</p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {request.products_count} عدد
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">روش پرداخت</p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {getPaymentMethodText(request.payment_method)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">مبلغ کل</p>
-                    <p className="text-base font-semibold text-green-600">
-                      {formatCurrency(request.total_price)}
-                    </p>
-                  </div>
-                </div>
-
-                {request.freight_cost > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">هزینه حمل:</span>{" "}
-                      {formatCurrency(request.freight_cost)}
-                    </p>
-                  </div>
-                )}
-
-                {request.address && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">آدرس:</span>{" "}
-                      {request.address}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalItems > itemsPerPage && (
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={Math.ceil(totalItems / itemsPerPage)}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+          <p className="text-red-800 font-semibold">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+          <span className="mr-3 text-gray-600 font-semibold">
+            در حال بارگذاری...
+          </span>
+        </div>
+      )}
+
+      {/* Requests Table */}
+      {!loading && requests.length > 0 && (
+        <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    کد درخواست
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    تاریخ ایجاد
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    تعداد محصولات
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    روش پرداخت
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    مبلغ کل
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                    وضعیت
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    عملیات
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {requests.map((request) => (
+                  <tr
+                    key={request.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/user/requests/${request.id}`)}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-gray-900">
+                        {request.code
+                          ? `#${request.code}`
+                          : request.id.slice(0, 8) + "..."}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {formatDate(request.created_at)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {request.products_count} عدد
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {getPaymentMethodText(request.payment_method)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="font-semibold text-green-600">
+                        {formatCurrency(request.total_price)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(
+                          request.status
+                        )}`}
+                      >
+                        {getStatusText(request.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/user/requests/${request.id}`);
+                        }}
+                        className="text-orange-600 hover:text-orange-700 font-semibold text-sm"
+                      >
+                        مشاهده
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && requests.length === 0 && (
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-12">
+          <div className="text-center">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg font-semibold">
+              هیچ درخواستی یافت نشد
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalItems > itemsPerPage && (
+        <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

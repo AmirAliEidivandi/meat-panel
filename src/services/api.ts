@@ -19,11 +19,13 @@ import type {
   CreateCheckDto,
   CreateCheckResponse,
   CreateDispatchCargoDto,
+  CreateOrderDto,
   CreateOrderFromRequestDto,
   CreatePaymentDto,
   CreatePaymentResponse,
   CreateReminderDto,
   CreateReminderResponse,
+  CreateReturnCargoDto,
   Customer,
   CustomerDebtListResponse,
   CustomerDetails,
@@ -45,9 +47,12 @@ import type {
   GroupsListResponse,
   GroupsListWithClientIdResponse,
   InactiveCustomersReportStats,
+  InitiateInvoicePaymentResponse,
   InvoiceById,
   InvoiceHistory,
   InvoiceListItem,
+  InvoicePaymentCallbackResponse,
+  InvoicePaymentInfo,
   Log,
   LoginRequest,
   LoginResponse,
@@ -59,6 +64,8 @@ import type {
   OrderCargo,
   OrderDetails,
   OrderHistory,
+  PayInvoiceFromWalletDto,
+  PayInvoiceFromWalletResponse,
   PaymentDetails,
   PaymentHistory,
   PaymentListResponse,
@@ -111,6 +118,7 @@ import type {
   UpdateProductPricesRequest,
   UpdateProductRequest,
   UpdateProfileSelfDto,
+  VerifyTokenResponse,
   WalletDetails,
   WalletHistory,
   WalletInfoResponse,
@@ -123,7 +131,8 @@ import type {
   ZibalWalletTopupResponse,
 } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+// const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+const API_BASE_URL = "http://localhost:3301";
 const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;
 
 // IP address cache
@@ -272,6 +281,74 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("selected_role");
+    localStorage.removeItem("client_ip");
+  },
+
+  verifyToken: async (token: string): Promise<VerifyTokenResponse> => {
+    const response = await api.post("/auth/verify-token", { token });
+    return response.data;
+  },
+
+  /**
+   * Check if user is authenticated and token is valid
+   * Returns true if authenticated, false otherwise
+   * If token is invalid, clears storage and redirects to login
+   */
+  checkAuth: async (): Promise<boolean> => {
+    const token = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    // No tokens at all
+    if (!token && !refreshToken) {
+      return false;
+    }
+
+    // If we have a token, verify it
+    if (token) {
+      try {
+        await authService.verifyToken(token);
+        return true;
+      } catch (error) {
+        // Token is invalid, try refresh
+        if (refreshToken) {
+          try {
+            const response = await api.post("/auth/refresh", {
+              refresh_token: refreshToken,
+            });
+            const { access_token } = response.data;
+            localStorage.setItem("access_token", access_token);
+            return true;
+          } catch (refreshError) {
+            // Both tokens are invalid, logout
+            console.warn("Both tokens are invalid, logging out...");
+            authService.logout();
+            return false;
+          }
+        } else {
+          // No refresh token, logout
+          authService.logout();
+          return false;
+        }
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * Initialize auth check on app load
+   * Redirects to login if not authenticated
+   */
+  initAuthCheck: async (): Promise<boolean> => {
+    const isAuthenticated = await authService.checkAuth();
+    if (!isAuthenticated) {
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
+    }
+    return isAuthenticated;
   },
 };
 
@@ -611,6 +688,10 @@ export const walletService = {
 };
 
 export const orderService = {
+  createOrder: async (data: CreateOrderDto): Promise<Order> => {
+    const response = await api.post("/orders", data);
+    return response.data;
+  },
   getOrders: async (
     query: QueryOrderDto
   ): Promise<{ data: Order[]; count: number }> => {
@@ -669,11 +750,24 @@ export const orderService = {
     });
     return response.data;
   },
+  archiveOrder: async (
+    orderId: string,
+    archived: boolean
+  ): Promise<OrderDetails> => {
+    const response = await api.put(`/orders/archive/${orderId}`, {
+      archived,
+    });
+    return response.data;
+  },
 };
 
 export const cargoService = {
   createDispatch: async (data: CreateDispatchCargoDto): Promise<OrderCargo> => {
     const response = await api.post("/cargos/dispatch", data);
+    return response.data;
+  },
+  createReturn: async (data: CreateReturnCargoDto): Promise<OrderCargo> => {
+    const response = await api.post("/cargos/return", data);
     return response.data;
   },
 };
@@ -753,6 +847,77 @@ export const paymentService = {
         trackId,
       },
     });
+    return response.data;
+  },
+  // Invoice Payment Methods
+  getInvoicePaymentInfo: async (
+    orderId: string
+  ): Promise<InvoicePaymentInfo> => {
+    const response = await api.get(`/orders/${orderId}/invoice/payment-info`);
+    return response.data;
+  },
+  payInvoiceFromWallet: async (
+    orderId: string,
+    data: PayInvoiceFromWalletDto
+  ): Promise<PayInvoiceFromWalletResponse> => {
+    const response = await api.post(
+      `/orders/${orderId}/invoice/pay-from-wallet`,
+      data
+    );
+    return response.data;
+  },
+  initiateInvoiceZarinpalPayment: async (
+    invoiceId: string,
+    amount: number
+  ): Promise<InitiateInvoicePaymentResponse> => {
+    const response = await api.post(
+      `/payments/invoices/${invoiceId}/gateway/zarinpal`,
+      { amount, gateway: "zarinpal" }
+    );
+    return response.data;
+  },
+  initiateInvoiceZibalPayment: async (
+    invoiceId: string,
+    amount: number
+  ): Promise<InitiateInvoicePaymentResponse> => {
+    const response = await api.post(
+      `/payments/invoices/${invoiceId}/gateway/zibal`,
+      { amount, gateway: "zibal" }
+    );
+    return response.data;
+  },
+  invoiceZarinpalCallback: async (
+    invoiceId: string,
+    paymentTransactionId: string,
+    authority: string,
+    status: string
+  ): Promise<InvoicePaymentCallbackResponse> => {
+    const response = await api.get(
+      `/payments/invoices/${invoiceId}/callback/zarinpal`,
+      {
+        params: {
+          payment_transaction_id: paymentTransactionId,
+          Authority: authority,
+          Status: status,
+        },
+      }
+    );
+    return response.data;
+  },
+  invoiceZibalCallback: async (
+    invoiceId: string,
+    paymentTransactionId: string,
+    trackId: number
+  ): Promise<InvoicePaymentCallbackResponse> => {
+    const response = await api.get(
+      `/payments/invoices/${invoiceId}/callback/zibal`,
+      {
+        params: {
+          payment_transaction_id: paymentTransactionId,
+          trackId,
+        },
+      }
+    );
     return response.data;
   },
 };

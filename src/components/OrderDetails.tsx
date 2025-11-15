@@ -1,4 +1,5 @@
 import {
+	Archive,
 	ArrowRight,
 	Calculator,
 	Calendar,
@@ -21,6 +22,7 @@ import type { OrderCargo, OrderDetails } from '../types';
 import CargoDetails from './CargoDetails';
 import ChangeOrderStepModal from './ChangeOrderStepModal';
 import CreateDispatchCargoModal from './CreateDispatchCargoModal';
+import CreateReturnCargoModal from './CreateReturnCargoModal';
 import FulfillProductConfirmModal from './FulfillProductConfirmModal';
 import UpdateOrderHpCodeModal from './UpdateOrderHpCodeModal';
 
@@ -155,8 +157,11 @@ export default function OrderDetails() {
 	const [selectedCargo, setSelectedCargo] = useState<OrderCargo | null>(null);
 	const [showChangeStepModal, setShowChangeStepModal] = useState(false);
 	const [showCreateDispatchModal, setShowCreateDispatchModal] = useState(false);
+	const [showCreateReturnModal, setShowCreateReturnModal] = useState(false);
+	const [selectedDispatchForReturn, setSelectedDispatchForReturn] = useState<OrderCargo | null>(null);
 	const [showUpdateHpCodeModal, setShowUpdateHpCodeModal] = useState(false);
 	const [changingPaymentStatus, setChangingPaymentStatus] = useState(false);
+	const [archiving, setArchiving] = useState(false);
 	const [fulfillProductModal, setFulfillProductModal] = useState<{
 		isOpen: boolean;
 		productId: string;
@@ -211,6 +216,21 @@ export default function OrderDetails() {
 			);
 		} finally {
 			setChangingPaymentStatus(false);
+		}
+	};
+
+	const handleArchiveOrder = async () => {
+		if (!orderId || !order) return;
+
+		try {
+			setArchiving(true);
+			await orderService.archiveOrder(orderId, !order.archived);
+			await fetchOrderDetails();
+		} catch (err: any) {
+			console.error('Error archiving order:', err);
+			setError('خطا در آرشیو کردن سفارش');
+		} finally {
+			setArchiving(false);
 		}
 	};
 
@@ -364,7 +384,10 @@ export default function OrderDetails() {
 							</div>
 						)}
 					</div>
-					{order.step === 'PROCESSING' && (
+					{(order.step === 'PROCESSING' || 
+					  order.step === 'CARGO' ||
+					  order.step === 'PARTIALLY_DELIVERED' || 
+					  order.step === 'DELIVERED') && (
 						<button
 							onClick={() => setShowCreateDispatchModal(true)}
 							className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold flex items-center space-x-reverse space-x-2 text-sm'
@@ -382,6 +405,27 @@ export default function OrderDetails() {
 							<span>ثبت کد حسابداری</span>
 						</button>
 					)}
+					<button
+						onClick={handleArchiveOrder}
+						disabled={archiving}
+						className={`px-4 py-2 rounded-lg transition-colors font-semibold flex items-center space-x-reverse space-x-2 text-sm disabled:opacity-50 ${
+							order.archived
+								? 'bg-green-600 text-white hover:bg-green-700'
+								: 'bg-amber-600 text-white hover:bg-amber-700'
+						}`}
+					>
+						{archiving ? (
+							<>
+								<Loader2 className='w-4 h-4 animate-spin' />
+								<span>در حال پردازش...</span>
+							</>
+						) : (
+							<>
+								<Archive className='w-4 h-4' />
+								<span>{order.archived ? 'برگرداندن از آرشیو' : 'آرشیو کردن'}</span>
+							</>
+						)}
+					</button>
 				</div>
 			</div>
 
@@ -830,26 +874,50 @@ export default function OrderDetails() {
 						{(order.cargos || []).map(cargo => (
 							<div
 								key={cargo.id}
-								className='bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer'
-								onClick={() => setSelectedCargo(cargo)}
+								className='bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow'
 							>
 								<div className='flex items-start justify-between mb-3'>
-									<div>
-										<h4 className='text-sm font-semibold text-gray-900 mb-1'>
-											مرسوله #{cargo.code}
-										</h4>
-										<p className='text-xs text-gray-600'>
-											{getCargoTypeText(cargo.type)}
-										</p>
+									<div
+										className='flex-1 cursor-pointer'
+										onClick={() => setSelectedCargo(cargo)}
+									>
+										<div className='flex items-center space-x-reverse space-x-2 mb-1'>
+											<h4 className='text-sm font-semibold text-gray-900'>
+												مرسوله #{cargo.code}
+											</h4>
+											<span
+												className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+													cargo.type === 'DISPATCH'
+														? 'bg-blue-100 text-blue-800'
+														: 'bg-red-100 text-red-800'
+												}`}
+											>
+												{getCargoTypeText(cargo.type)}
+											</span>
+										</div>
+										<div className='flex items-center space-x-reverse space-x-4 text-xs text-gray-600'>
+											<span>{formatDate(cargo.date)}</span>
+											<span>{cargo.products.length} محصول</span>
+										</div>
 									</div>
-									<div className='text-left'>
-										<p className='text-sm font-semibold text-gray-900'>
-											{formatDate(cargo.date)}
-										</p>
-										<p className='text-xs text-gray-600'>
-											{cargo.products.length} محصول
-										</p>
-									</div>
+									{cargo.type === 'DISPATCH' && (
+										<div className='relative group'>
+											<button
+												onClick={(e) => {
+													e.stopPropagation();
+													setSelectedDispatchForReturn(cargo);
+													setShowCreateReturnModal(true);
+												}}
+												className='p-1.5 hover:bg-gray-200 rounded-lg transition-colors'
+												title='ثبت مرجوعی'
+											>
+												<MoreVertical className='w-4 h-4 text-gray-600' />
+											</button>
+											<div className='absolute left-0 top-full mt-1 hidden group-hover:block bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10'>
+												ثبت مرجوعی
+											</div>
+										</div>
+									)}
 								</div>
 								<div className='grid grid-cols-1 md:grid-cols-3 gap-3 text-xs'>
 									<div>
@@ -921,6 +989,22 @@ export default function OrderDetails() {
 							setShowCreateDispatchModal(false);
 						}}
 					/>
+					{selectedDispatchForReturn && (
+						<CreateReturnCargoModal
+							order={order}
+							dispatchCargo={selectedDispatchForReturn}
+							isOpen={showCreateReturnModal}
+							onClose={() => {
+								setShowCreateReturnModal(false);
+								setSelectedDispatchForReturn(null);
+							}}
+							onSuccess={() => {
+								fetchOrderDetails();
+								setShowCreateReturnModal(false);
+								setSelectedDispatchForReturn(null);
+							}}
+						/>
+					)}
 					<UpdateOrderHpCodeModal
 						order={order}
 						isOpen={showUpdateHpCodeModal}

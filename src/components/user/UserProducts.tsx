@@ -1,12 +1,27 @@
-import { Heart, Loader2, Minus, Plus, Search, ShoppingBag } from "lucide-react";
+import {
+  Heart,
+  Loader2,
+  Minus,
+  Plus,
+  RefreshCw,
+  Search,
+  ShoppingBag,
+  ShoppingCart,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "../../lib/utils";
-import { cartService, favoriteService, fileUrl, publicService } from "../../services/api";
+import {
+  cartService,
+  favoriteService,
+  fileUrl,
+  publicService,
+} from "../../services/api";
 import {
   TemperatureTypeEnumValues,
   type PublicProductListItem,
   type QueryPublicDto,
 } from "../../types";
+import Pagination from "../Pagination";
 
 export default function UserProducts() {
   const [products, setProducts] = useState<PublicProductListItem[]>([]);
@@ -44,7 +59,6 @@ export default function UserProducts() {
   };
 
   const handleWeightChange = (productId: string, value: string) => {
-    // Only allow positive integers
     const numValue = parseInt(value, 10);
     if (value === "" || (numValue > 0 && !isNaN(numValue))) {
       setProductWeights((prev) => ({
@@ -72,16 +86,20 @@ export default function UserProducts() {
     }
   };
 
-  const handleToggleFavorite = async (productId: string, e: React.MouseEvent) => {
+  const handleToggleFavorite = async (
+    productId: string,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
-    
+
     try {
       setTogglingFavorite(productId);
       setError("");
-      
-      const response = await favoriteService.addFavoriteProduct({ product_id: productId });
-      
-      // Update the product's favorite status locally
+
+      const response = await favoriteService.addFavoriteProduct({
+        product_id: productId,
+      });
+
       setProducts((prev) =>
         prev.map((product) =>
           product.id === productId
@@ -91,7 +109,9 @@ export default function UserProducts() {
       );
     } catch (err: any) {
       console.error("Error toggling favorite:", err);
-      setError(err.response?.data?.message || "خطا در تغییر وضعیت علاقه‌مندی");
+      setError(
+        err.response?.data?.message || "خطا در تغییر وضعیت علاقه‌مندی"
+      );
     } finally {
       setTogglingFavorite(null);
     }
@@ -114,14 +134,12 @@ export default function UserProducts() {
         weight: weight,
       });
 
-      // Reset weight for this product
       setProductWeights((prev) => {
         const newWeights = { ...prev };
         delete newWeights[productId];
         return newWeights;
       });
 
-      // Show success message
       alert("محصول به سبد خرید اضافه شد");
     } catch (err: any) {
       console.error("Error adding to cart:", err);
@@ -145,10 +163,12 @@ export default function UserProducts() {
     setFilters((prev) => ({ ...prev, page }));
   };
 
+  const totalPages = Math.ceil(totalCount / (filters["page-size"] || 20));
+
   return (
-    <div className="space-y-6 fade-in font-vazir">
+    <div className="fade-in font-vazir max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-6">
+      <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-reverse space-x-3">
             <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -161,6 +181,13 @@ export default function UserProducts() {
               </p>
             </div>
           </div>
+          <button
+            onClick={fetchProducts}
+            className="inline-flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200"
+          >
+            <RefreshCw className="w-4 h-4 ml-2" />
+            بروزرسانی
+          </button>
         </div>
 
         {/* Search Bar */}
@@ -182,7 +209,7 @@ export default function UserProducts() {
           </div>
           <button
             onClick={handleSearch}
-            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold"
+            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all font-semibold shadow-lg"
           >
             جستجو
           </button>
@@ -191,7 +218,7 @@ export default function UserProducts() {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
           <p className="text-red-800 font-semibold">{error}</p>
         </div>
       )}
@@ -208,7 +235,7 @@ export default function UserProducts() {
 
       {/* Products Grid */}
       {!loading && products.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
           {products.map((product) => (
             <div
               key={product.id}
@@ -235,10 +262,10 @@ export default function UserProducts() {
                 <button
                   onClick={(e) => handleToggleFavorite(product.id, e)}
                   disabled={togglingFavorite === product.id}
-                  className={`absolute top-2 left-2 p-2 rounded-full transition-all duration-200 ${
+                  className={`absolute top-3 left-3 p-2 rounded-full transition-all duration-200 shadow-lg ${
                     product.is_favorite
-                      ? "bg-red-500 text-white"
-                      : "bg-white/80 text-gray-400 hover:bg-white"
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : "bg-white/90 text-gray-400 hover:bg-white hover:text-red-500"
                   } ${togglingFavorite === product.id ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
                 >
                   <Heart
@@ -251,13 +278,23 @@ export default function UserProducts() {
 
               {/* Product Info */}
               <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
                   {product.title}
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">کد: {product.code}</p>
                 {product.temperature_type && (
                   <div className="mb-3">
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                    <span
+                      className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                        product.temperature_type ===
+                        TemperatureTypeEnumValues.COLD
+                          ? "bg-blue-100 text-blue-800"
+                          : product.temperature_type ===
+                            TemperatureTypeEnumValues.HOT
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
                       {product.temperature_type ===
                       TemperatureTypeEnumValues.COLD
                         ? "منجمد"
@@ -273,7 +310,7 @@ export default function UserProducts() {
                     <div className="mb-4">
                       <p className="text-xl font-bold text-emerald-600">
                         {formatCurrency(product.online_price)}
-                        <span className="text-sm text-gray-600 mr-1">
+                        <span className="text-sm text-gray-600 mr-1 font-normal">
                           / کیلوگرم
                         </span>
                       </p>
@@ -330,7 +367,7 @@ export default function UserProducts() {
                 <button
                   onClick={() => handleAddToCart(product.id)}
                   disabled={addingToCart === product.id}
-                  className="w-full flex items-center justify-center space-x-reverse space-x-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold"
+                  className="w-full flex items-center justify-center space-x-reverse space-x-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold shadow-lg"
                 >
                   {addingToCart === product.id ? (
                     <>
@@ -339,7 +376,7 @@ export default function UserProducts() {
                     </>
                   ) : (
                     <>
-                      <Plus className="w-5 h-5" />
+                      <ShoppingCart className="w-5 h-5" />
                       <span>افزودن به سبد خرید</span>
                     </>
                   )}
@@ -353,35 +390,28 @@ export default function UserProducts() {
       {/* Empty State */}
       {!loading && products.length === 0 && (
         <div className="bg-white rounded-xl border-2 border-gray-200 p-12 text-center">
-          <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg font-semibold">محصولی یافت نشد</p>
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBag className="w-12 h-12 text-gray-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            محصولی یافت نشد
+          </h2>
+          <p className="text-gray-500">
+            لطفاً عبارت جستجوی دیگری را امتحان کنید
+          </p>
         </div>
       )}
 
       {/* Pagination */}
-      {!loading && products.length > 0 && (
-        <div className="flex items-center justify-center space-x-reverse space-x-2">
-          <button
-            onClick={() => handlePageChange(filters.page! - 1)}
-            disabled={filters.page === 1}
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-          >
-            قبلی
-          </button>
-          <span className="px-4 py-2 text-gray-700 font-semibold">
-            صفحه {filters.page} از{" "}
-            {Math.ceil(totalCount / (filters["page-size"] || 20))}
-          </span>
-          <button
-            onClick={() => handlePageChange(filters.page! + 1)}
-            disabled={
-              filters.page! >=
-              Math.ceil(totalCount / (filters["page-size"] || 20))
-            }
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-          >
-            بعدی
-          </button>
+      {!loading && products.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center">
+          <Pagination
+            currentPage={filters.page || 1}
+            totalPages={totalPages}
+            totalItems={totalCount}
+            itemsPerPage={filters["page-size"] || 20}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
     </div>

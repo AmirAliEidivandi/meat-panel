@@ -1,10 +1,11 @@
-import { Loader2, ShoppingCart } from 'lucide-react';
+import { Archive, Loader2, Plus, ShoppingCart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { customerService, orderService } from '../services/api';
 import type { CustomerListItem, Order, QueryOrderDto } from '../types';
 import Pagination from './Pagination';
+import CreateOrderWizard from './CreateOrderWizard';
 
 // Helper functions for Persian labels
 const getOrderStepText = (step: string): string => {
@@ -80,6 +81,8 @@ export default function Orders() {
 		'page-size': 20,
 	});
 	const [customers, setCustomers] = useState<CustomerListItem[]>([]);
+	const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+	const [archivingOrderId, setArchivingOrderId] = useState<string | null>(null);
 
 	useEffect(() => {
 		fetchOrders();
@@ -112,6 +115,19 @@ export default function Orders() {
 			setCustomers(response.data || []);
 		} catch (err) {
 			console.error('Error fetching customers:', err);
+		}
+	};
+
+	const handleArchiveOrder = async (orderId: string, archived: boolean) => {
+		try {
+			setArchivingOrderId(orderId);
+			await orderService.archiveOrder(orderId, archived);
+			await fetchOrders(); // رفرش لیست سفارشات
+		} catch (err: any) {
+			console.error('Error archiving order:', err);
+			setError('خطا در آرشیو کردن سفارش');
+		} finally {
+			setArchivingOrderId(null);
 		}
 	};
 
@@ -161,6 +177,13 @@ export default function Orders() {
 							</p>
 						</div>
 					</div>
+					<button
+						onClick={() => setShowCreateOrderModal(true)}
+						className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center space-x-reverse space-x-2'
+					>
+						<Plus className='w-5 h-5' />
+						<span>ایجاد سفارش جدید</span>
+					</button>
 				</div>
 
 				{/* Filters */}
@@ -361,7 +384,8 @@ export default function Orders() {
 													<span className='text-yellow-600 font-semibold'>-</span>
 											)}
 										</td>
-										<td className='px-4 py-4 text-center'>
+									<td className='px-4 py-4 text-center'>
+										<div className='flex items-center justify-center space-x-reverse space-x-2'>
 											<button
 												onClick={e => {
 													e.stopPropagation();
@@ -371,7 +395,27 @@ export default function Orders() {
 											>
 												مشاهده
 											</button>
-										</td>
+											<button
+												onClick={e => {
+													e.stopPropagation();
+													handleArchiveOrder(order.id, !order.archived);
+												}}
+												disabled={archivingOrderId === order.id}
+												className={`p-2 rounded-lg transition-colors text-sm font-semibold flex items-center justify-center disabled:opacity-50 ${
+													order.archived
+														? 'bg-green-100 text-green-700 hover:bg-green-200'
+														: 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+												}`}
+												title={order.archived ? 'برگرداندن از آرشیو' : 'آرشیو کردن'}
+											>
+												{archivingOrderId === order.id ? (
+													<Loader2 className='w-4 h-4 animate-spin' />
+												) : (
+													<Archive className='w-4 h-4' />
+												)}
+											</button>
+										</div>
+									</td>
 									</tr>
 								))}
 							</tbody>
@@ -400,6 +444,17 @@ export default function Orders() {
 					onPageChange={handlePageChange}
 				/>
 			)}
+
+			{/* Create Order Wizard */}
+			<CreateOrderWizard
+				isOpen={showCreateOrderModal}
+				onClose={() => setShowCreateOrderModal(false)}
+				onSuccess={orderId => {
+					setShowCreateOrderModal(false);
+					fetchOrders();
+					navigate(`/manage/orders/${orderId}`);
+				}}
+			/>
 		</div>
 	);
 }

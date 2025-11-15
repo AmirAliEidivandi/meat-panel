@@ -2992,6 +2992,18 @@ export interface CreateDispatchCargoDto {
   products: ProductInCargoDto[];
 }
 
+export interface CreateReturnCargoDto {
+  order_id: string;
+  date: Date | string;
+  warehouse_id: string;
+  truck_id?: string;
+  delivery_method: DeliveryMethodEnum;
+  employee_id: string;
+  dispatch_cargo_id: string;
+  description?: string;
+  products: ProductInCargoDto[];
+}
+
 export interface ProfileByGroupsResponse {
   success: boolean;
   count: number;
@@ -3193,6 +3205,21 @@ export interface MyRequestDetailsResponse {
     total_price: number;
     images: FileSummary[];
   }[];
+  orders: {
+    id: string;
+    code: number;
+    step: string;
+    payment_status: string;
+    address: string | null;
+    description: string | null;
+    delivery_method: string;
+    invoices: {
+      amount: number;
+      code: number;
+      payment_status: string;
+      description: string | null;
+    }[];
+  }[];
 }
 
 export interface ZarinpalWalletTopupResponse {
@@ -3240,6 +3267,53 @@ export interface CreatePaymentResponse {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+// Invoice Payment Types
+export interface InvoicePaymentInfo {
+  order_id: string;
+  request_id?: string | null; // ID of the customer request (if exists)
+  invoice_id: string;
+  invoice_code: number;
+  total_amount: number;
+  wallet_balance: number;
+  remaining_amount: number;
+  can_pay_from_wallet: boolean;
+  payment_status: "NOT_PAID" | "PARTIALLY_PAID" | "PAID";
+  created_at: string;
+}
+
+export interface PayInvoiceFromWalletDto {
+  amount?: number;
+}
+
+export interface PayInvoiceFromWalletResponse {
+  success: boolean;
+  message: string;
+  payment_id: string;
+  remaining_amount: number;
+  wallet_balance_after: number;
+}
+
+export interface InitiateInvoicePaymentDto {
+  amount: number;
+  gateway: "zarinpal" | "zibal";
+}
+
+export interface InitiateInvoicePaymentResponse {
+  payment_transaction_id: string;
+  redirect_url: string;
+  amount: number;
+}
+
+export interface InvoicePaymentCallbackResponse {
+  success: boolean;
+  message: string;
+  ref_id: string;
+  invoice_id: string;
+  order_id: string;
+  amount_paid: number;
+  wallet_balance_after: number;
 }
 
 export interface UpdateCustomerCreditCapResponse {
@@ -3695,4 +3769,44 @@ export interface QueryCapillarySalesLineDto {
   title?: string;
   line_number?: number;
   branch_id?: string;
+}
+
+export interface CreateOrderDto {
+  customer_id: string;
+  did_we_contact: boolean;
+  new_customer: boolean;
+  person_id: string;
+  answered: boolean;
+  call_duration: number;
+  bought: boolean;
+  not_purchased_reason?: string;
+  ordered_basket?: CreateOrderedProductDto[];
+  failed_basket?: CreateFailedProductDto[];
+  settlements?: SettlementDto[];
+  delivery_date: Date;
+  consumption_time?: number;
+  created_date: Date;
+  delivery_method: string;
+  location?: {
+    lat: number;
+    long: number;
+  };
+  behavior_tags: string[];
+  description?: string;
+  payment_status?: string;
+  address: string;
+  warehouse_id?: string;
+  in_person_order: boolean;
+  follow_up_id?: string;
+  hp_invoice_code?: number;
+}
+
+export interface VerifyTokenResponse {
+  valid: boolean;
+  message: string;
+  current_time?: number;
+  exp?: number;
+  time_remaining?: number;
+  username?: string;
+  error?: string;
 }

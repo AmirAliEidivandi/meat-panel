@@ -1,4 +1,4 @@
-import { Loader2, Package, Truck as TruckIcon, User, X } from "lucide-react";
+import { Loader2, Package, Truck, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 // @ts-ignore
 import { jalaaliToDateObject, toJalaali } from "jalaali-js";
@@ -9,10 +9,11 @@ import {
   warehouseService,
 } from "../services/api";
 import type {
-  CreateDispatchCargoDto,
+  CreateReturnCargoDto,
   Employee,
+  OrderCargo,
   OrderDetails,
-  Truck,
+  Truck as TruckType,
   Warehouse,
 } from "../types";
 import CustomDropdown from "./CustomDropdown";
@@ -20,14 +21,15 @@ import CustomInput from "./CustomInput";
 import CustomTextarea from "./CustomTextarea";
 import PersianDatePicker from "./PersianDatePicker";
 
-interface CreateDispatchCargoModalProps {
+interface CreateReturnCargoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   order: OrderDetails;
+  dispatchCargo: OrderCargo; // مرسوله ارسالی که میخوایم براش مرجوعی ثبت کنیم
 }
 
-interface DispatchProduct {
+interface ReturnProduct {
   product_id: string;
   product_code: string;
   product_title: string;
@@ -35,22 +37,22 @@ interface DispatchProduct {
   net_weight: number;
   box_weight: number;
   gross_weight: number;
-  carton_count: number;
-  maxAvailable: number; // حداکثر مقدار قابل ارسال
+  maxAvailable: number; // حداکثر مقدار قابل مرجوع
 }
 
-export default function CreateDispatchCargoModal({
+export default function CreateReturnCargoModal({
   isOpen,
   onClose,
   onSuccess,
   order,
-}: CreateDispatchCargoModalProps) {
+  dispatchCargo,
+}: CreateReturnCargoModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Data lists
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [trucks, setTrucks] = useState<TruckType[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   // Form fields
@@ -60,7 +62,7 @@ export default function CreateDispatchCargoModal({
   const [deliveryMethod, setDeliveryMethod] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [products, setProducts] = useState<DispatchProduct[]>([]);
+  const [products, setProducts] = useState<ReturnProduct[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,7 +80,7 @@ export default function CreateDispatchCargoModal({
     } else {
       resetForm();
     }
-  }, [isOpen, order]);
+  }, [isOpen, dispatchCargo]);
 
   const fetchData = async () => {
     try {
@@ -116,21 +118,18 @@ export default function CreateDispatchCargoModal({
   };
 
   const initializeProducts = () => {
-    // محصولات سفارش رو init کن
-    const dispatchProducts: DispatchProduct[] = (
-      order.ordered_basket || []
-    ).map((item) => ({
-      product_id: item.product_id,
-      product_code: item.product_code.toString(),
-      product_title: item.product_title,
-      sec_unit_amount: 0, // کاربر باید مقدار رو وارد کنه
+    // محصولات مرسوله ارسالی رو init کن
+    const returnProducts: ReturnProduct[] = dispatchCargo.products.map((p) => ({
+      product_id: p.product_id,
+      product_code: p.product_code.toString(),
+      product_title: p.product_title,
+      sec_unit_amount: 0, // کاربر باید مقدار مرجوعی رو وارد کنه
       net_weight: 0,
       box_weight: 0,
       gross_weight: 0,
-      carton_count: 0,
-      maxAvailable: item.weight, // حداکثر مقداری که میشه ارسال کرد
+      maxAvailable: p.sec_unit_amount, // حداکثر مقداری که میشه مرجوع کرد
     }));
-    setProducts(dispatchProducts);
+    setProducts(returnProducts);
   };
 
   const resetForm = () => {
@@ -185,7 +184,7 @@ export default function CreateDispatchCargoModal({
 
   const handleUpdateProduct = (
     productId: string,
-    field: keyof DispatchProduct,
+    field: keyof ReturnProduct,
     value: number
   ) => {
     setProducts(
@@ -213,10 +212,10 @@ export default function CreateDispatchCargoModal({
       return false;
     }
 
-    // حداقل یک محصول باید اضافه شده باشه
+    // حداقل یک محصول باید مرجوع شده باشه
     const hasProducts = products.some((p) => p.sec_unit_amount > 0);
     if (!hasProducts) {
-      setError("لطفاً حداقل یک محصول برای ارسال انتخاب کنید");
+      setError("لطفاً حداقل یک محصول برای مرجوعی انتخاب کنید");
       return false;
     }
 
@@ -224,7 +223,7 @@ export default function CreateDispatchCargoModal({
     for (const product of products) {
       if (product.sec_unit_amount > product.maxAvailable) {
         setError(
-          `مقدار ارسالی ${product.product_title} نمی‌تواند بیشتر از ${product.maxAvailable} باشد`
+          `مقدار مرجوعی ${product.product_title} نمی‌تواند بیشتر از ${product.maxAvailable} باشد`
         );
         return false;
       }
@@ -241,8 +240,8 @@ export default function CreateDispatchCargoModal({
     try {
       setLoading(true);
 
-      // فقط محصولاتی که مقدار ارسالی دارن رو بفرست
-      const dispatchProductsData = products
+      // فقط محصولاتی که مقدار مرجوعی دارن رو بفرست
+      const returnProductsData = products
         .filter((p) => p.sec_unit_amount > 0)
         .map((p) => ({
           product_id: p.product_id,
@@ -250,27 +249,27 @@ export default function CreateDispatchCargoModal({
           net_weight: p.net_weight,
           box_weight: p.box_weight,
           gross_weight: p.gross_weight,
-          carton_count: p.carton_count,
         }));
 
-      const cargoData: CreateDispatchCargoDto = {
+      const cargoData: CreateReturnCargoDto = {
         order_id: order.id,
         date: convertPersianToDate(date),
         warehouse_id: warehouseId,
         truck_id: truckId || undefined,
         delivery_method: deliveryMethod as any,
         employee_id: employeeId,
+        dispatch_cargo_id: dispatchCargo.id,
         description: description || undefined,
-        products: dispatchProductsData,
+        products: returnProductsData,
       };
 
-      await cargoService.createDispatch(cargoData);
+      await cargoService.createReturn(cargoData);
       onSuccess();
       onClose();
       resetForm();
     } catch (err: any) {
-      console.error("Error creating dispatch cargo:", err);
-      setError(err.response?.data?.message || "خطا در ثبت مرسوله");
+      console.error("Error creating return cargo:", err);
+      setError(err.response?.data?.message || "خطا در ثبت مرسوله بازگشتی");
     } finally {
       setLoading(false);
     }
@@ -282,16 +281,18 @@ export default function CreateDispatchCargoModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-vazir">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-red-600 to-rose-600 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-reverse space-x-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
               <Package className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">
-                ثبت مرسوله ارسالی
+                ثبت مرسوله بازگشتی
               </h2>
-              <p className="text-sm text-blue-100">سفارش #{order.code}</p>
+              <p className="text-sm text-red-100">
+                مرجوعی برای مرسوله #{dispatchCargo.code}
+              </p>
             </div>
           </div>
           <button
@@ -316,7 +317,7 @@ export default function CreateDispatchCargoModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  تاریخ ارسال <span className="text-red-500">*</span>
+                  تاریخ بازگشت <span className="text-red-500">*</span>
                 </label>
                 <PersianDatePicker
                   value={date}
@@ -353,13 +354,13 @@ export default function CreateDispatchCargoModal({
                   { value: "", label: "انتخاب روش تحویل" },
                   {
                     value: "FREE_OUR_TRUCK",
-                    label: "ارسال رایگان با ماشین شرکت",
+                    label: "بازگشت با ماشین شرکت (رایگان)",
                   },
                   {
                     value: "FREE_OTHER_SERVICES",
-                    label: "ارسال رایگان با سرویس خارجی",
+                    label: "بازگشت با سرویس خارجی (رایگان)",
                   },
-                  { value: "PAID", label: "ارسال با هزینه مشتری" },
+                  { value: "PAID", label: "بازگشت با هزینه" },
                   { value: "AT_INVENTORY", label: "درب انبار" },
                 ]}
                 placeholder="انتخاب روش تحویل"
@@ -385,7 +386,7 @@ export default function CreateDispatchCargoModal({
                         ? "ماشینی برای این انبار یافت نشد"
                         : "انتخاب ماشین"
                     }
-                    icon={<TruckIcon className="w-5 h-5" />}
+                    icon={<Truck className="w-5 h-5" />}
                   />
                   {!warehouseId && (
                     <p className="text-xs text-amber-600 mt-1.5">
@@ -421,13 +422,13 @@ export default function CreateDispatchCargoModal({
             {/* محصولات */}
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4">
-                محصولات ارسالی
+                محصولات مرجوعی
               </h3>
               <div className="space-y-3">
                 {products.map((product) => (
                   <div
                     key={product.product_id}
-                    className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4"
+                    className="bg-red-50 border-2 border-red-200 rounded-xl p-4"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -437,13 +438,13 @@ export default function CreateDispatchCargoModal({
                         <p className="text-sm text-gray-600">
                           کد: {product.product_code}
                         </p>
-                        <p className="text-xs text-blue-600 font-medium mt-1">
-                          حداکثر قابل ارسال: {product.maxAvailable} کیلوگرم
+                        <p className="text-xs text-red-600 font-medium mt-1">
+                          حداکثر قابل مرجوع: {product.maxAvailable} واحد
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <CustomInput
                         label="تعداد (واحد)"
                         type="number"
@@ -500,20 +501,6 @@ export default function CreateDispatchCargoModal({
                         placeholder="0"
                         className="text-sm"
                       />
-                      <CustomInput
-                        label="تعداد کارتن"
-                        type="number"
-                        value={product.carton_count || ""}
-                        onChange={(val) =>
-                          handleUpdateProduct(
-                            product.product_id,
-                            "carton_count",
-                            typeof val === "number" ? val : 0
-                          )
-                        }
-                        placeholder="0"
-                        className="text-sm"
-                      />
                     </div>
                   </div>
                 ))}
@@ -526,7 +513,7 @@ export default function CreateDispatchCargoModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="توضیحات اضافی در مورد مرسوله..."
+              placeholder="توضیحات اضافی در مورد مرجوعی..."
             />
           </div>
         </div>
@@ -545,10 +532,10 @@ export default function CreateDispatchCargoModal({
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-semibold disabled:opacity-50 flex items-center space-x-reverse space-x-2"
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all font-semibold disabled:opacity-50 flex items-center space-x-reverse space-x-2"
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-            <span>{loading ? "در حال ثبت..." : "ثبت مرسوله"}</span>
+            <span>{loading ? "در حال ثبت..." : "ثبت مرسوله بازگشتی"}</span>
           </button>
         </div>
       </div>

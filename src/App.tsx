@@ -5,6 +5,7 @@ import {
 	BrowserRouter as Router,
 	Routes,
 } from 'react-router-dom';
+import { authService } from './services/api';
 import CargoHistory from './components/CargoHistory';
 import Categories from './components/Categories';
 import CategoryDetails from './components/CategoryDetails';
@@ -67,6 +68,8 @@ import WalletTopupCallback from './components/user/WalletTopupCallback';
 import UserProducts from './components/user/UserProducts';
 import UserCart from './components/user/UserCart';
 import UserFavorites from './components/user/UserFavorites';
+import InvoicePaymentPage from './components/user/InvoicePaymentPage';
+import InvoicePaymentCallback from './components/user/InvoicePaymentCallback';
 
 function AdminPanel({ onLogout }: { onLogout: () => void }) {
 	return (
@@ -198,6 +201,9 @@ function UserPanel({ onLogout }: { onLogout: () => void }) {
 					<Route path='wallet-topup/callback' element={<WalletTopupCallback />} />
 					<Route path='requests' element={<MyRequests />} />
 					<Route path='requests/:id' element={<MyRequestDetails />} />
+					{/* Invoice Payment */}
+					<Route path='orders/:orderId/invoice/payment' element={<InvoicePaymentPage />} />
+					<Route path='invoice-payment/callback' element={<InvoicePaymentCallback />} />
 					{/* Tickets */}
 					<Route path='tickets' element={<UserTickets />} />
 					<Route path='tickets/:id' element={<UserTicketDetails />} />
@@ -222,14 +228,41 @@ function App() {
 	const [panelType, setPanelType] = useState<'admin' | 'customer' | null>(
 		localStorage.getItem('panel_type') as 'admin' | 'customer' | null,
 	);
+	const [authChecking, setAuthChecking] = useState(true);
 
 	useEffect(() => {
-		const token = localStorage.getItem('access_token');
-		setIsLoggedIn(!!token);
-		const storedPanelType = localStorage.getItem('panel_type');
-		if (storedPanelType) {
-			setPanelType(storedPanelType as 'admin' | 'customer');
-		}
+		const checkAuthentication = async () => {
+			const token = localStorage.getItem('access_token');
+			
+			if (token) {
+				// User appears to be logged in, verify the token
+				try {
+					const isValid = await authService.checkAuth();
+					setIsLoggedIn(isValid);
+					
+					if (isValid) {
+						const storedPanelType = localStorage.getItem('panel_type');
+						if (storedPanelType) {
+							setPanelType(storedPanelType as 'admin' | 'customer');
+						}
+					} else {
+						// Token is invalid, clear everything
+						setPanelType(null);
+					}
+				} catch (error) {
+					console.error('Auth check failed:', error);
+					setIsLoggedIn(false);
+					setPanelType(null);
+					authService.logout();
+				}
+			} else {
+				setIsLoggedIn(false);
+			}
+			
+			setAuthChecking(false);
+		};
+
+		checkAuthentication();
 	}, []);
 
 	const handleLoginSuccess = () => {
@@ -241,12 +274,23 @@ function App() {
 	};
 
 	const handleLogout = () => {
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refresh_token');
+		authService.logout();
 		localStorage.removeItem('panel_type');
 		setIsLoggedIn(false);
 		setPanelType(null);
 	};
+
+	// Show loading while checking authentication
+	if (authChecking) {
+		return (
+			<div className='flex items-center justify-center h-screen bg-gray-100'>
+				<div className='text-center'>
+					<div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4'></div>
+					<p className='text-gray-600 font-semibold font-vazir'>در حال بررسی احراز هویت...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<Router>
