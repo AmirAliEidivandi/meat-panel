@@ -8,9 +8,11 @@ import {
 	Lock,
 	Package,
 	Receipt,
+	Trash2,
 	User,
 	Users,
 	Wallet,
+	X,
 	XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -93,6 +95,9 @@ export default function CustomerDetails() {
 	const [showUpdateSellerModal, setShowUpdateSellerModal] = useState(false);
 	const [showUpdateCapillarySalesLineModal, setShowUpdateCapillarySalesLineModal] =
 		useState(false);
+	const [showDeletePaymentModal, setShowDeletePaymentModal] = useState(false);
+	const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+	const [deletingPayment, setDeletingPayment] = useState(false);
 
 	useEffect(() => {
 		if (customerId) {
@@ -264,6 +269,39 @@ export default function CustomerDetails() {
 			OTHER: 'سایر',
 		};
 		return categoryMap[category] || category;
+	};
+
+	const handleDeletePayment = async () => {
+		if (!paymentToDelete) return;
+
+		try {
+			setDeletingPayment(true);
+			await paymentService.deletePayment(paymentToDelete);
+			// Refresh payments list
+			await fetchPayments();
+			// Refresh wallet balance
+			if (walletId) {
+				await fetchWallet();
+			}
+			// Close modal
+			setShowDeletePaymentModal(false);
+			setPaymentToDelete(null);
+		} catch (err: any) {
+			console.error('Error deleting payment:', err);
+			alert(err.response?.data?.message || 'خطا در حذف پرداخت');
+		} finally {
+			setDeletingPayment(false);
+		}
+	};
+
+	const openDeletePaymentModal = (paymentId: string) => {
+		setPaymentToDelete(paymentId);
+		setShowDeletePaymentModal(true);
+	};
+
+	const closeDeletePaymentModal = () => {
+		setShowDeletePaymentModal(false);
+		setPaymentToDelete(null);
 	};
 
 	const getPaymentStatusText = (status: string) => {
@@ -863,13 +901,15 @@ export default function CustomerDetails() {
 										{payments.map(payment => (
 											<div
 												key={payment.id}
-												onClick={() =>
-													navigate(`/manage/payments/${payment.id}`)
-												}
-												className='bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors'
+												className='bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors'
 											>
 												<div className='flex items-center justify-between mb-3'>
-													<div>
+													<div
+														onClick={() =>
+															navigate(`/manage/payments/${payment.id}`)
+														}
+														className='flex-1 cursor-pointer'
+													>
 														<p className='font-bold text-gray-900'>
 															پرداخت #{payment.code}
 														</p>
@@ -877,13 +917,25 @@ export default function CustomerDetails() {
 															{formatDate(payment.date)}
 														</p>
 													</div>
-													<span
-														className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold ${getPaymentMethodColor(
-															payment.method,
-														)}`}
-													>
-														{getPaymentMethodText(payment.method)}
-													</span>
+													<div className='flex items-center space-x-reverse space-x-3'>
+														<span
+															className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold ${getPaymentMethodColor(
+																payment.method,
+															)}`}
+														>
+															{getPaymentMethodText(payment.method)}
+														</span>
+														<button
+															onClick={(e) => {
+																e.stopPropagation();
+																openDeletePaymentModal(payment.id);
+															}}
+															className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+															title='حذف پرداخت'
+														>
+															<Trash2 className='w-5 h-5' />
+														</button>
+													</div>
 												</div>
 												<div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
 													<div className='bg-gray-50 rounded-lg p-3'>
@@ -1473,6 +1525,65 @@ export default function CustomerDetails() {
 						}}
 					/>
 				</>
+			)}
+
+			{/* Delete Payment Confirmation Modal */}
+			{showDeletePaymentModal && (
+				<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+					<div className='bg-white rounded-xl shadow-2xl max-w-md w-full p-6'>
+						<div className='flex items-center justify-between mb-6'>
+							<h3 className='text-xl font-bold text-gray-900'>
+								تایید حذف پرداخت
+							</h3>
+							<button
+								onClick={closeDeletePaymentModal}
+								className='text-gray-400 hover:text-gray-600 transition-colors'
+								disabled={deletingPayment}
+							>
+								<X className='w-5 h-5' />
+							</button>
+						</div>
+
+						<div className='mb-6'>
+							<div className='flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4'>
+								<Trash2 className='w-8 h-8 text-red-600' />
+							</div>
+							<p className='text-gray-700 text-center mb-2'>
+								آیا مطمئن هستید که می‌خواهید این پرداخت را حذف کنید؟
+							</p>
+							<p className='text-sm text-gray-500 text-center'>
+								این عمل قابل بازگشت نیست و موجودی کیف پول مشتری تغییر خواهد کرد.
+							</p>
+						</div>
+
+						<div className='flex items-center space-x-reverse space-x-3'>
+							<button
+								onClick={closeDeletePaymentModal}
+								disabled={deletingPayment}
+								className='flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50'
+							>
+								انصراف
+							</button>
+							<button
+								onClick={handleDeletePayment}
+								disabled={deletingPayment}
+								className='flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 flex items-center justify-center space-x-reverse space-x-2'
+							>
+								{deletingPayment ? (
+									<>
+										<Loader2 className='w-5 h-5 animate-spin' />
+										<span>در حال حذف...</span>
+									</>
+								) : (
+									<>
+										<Trash2 className='w-5 h-5' />
+										<span>حذف</span>
+									</>
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);

@@ -2,6 +2,7 @@ import {
 	ArrowRight,
 	CreditCard,
 	DollarSign,
+	Edit,
 	Loader2,
 	Settings,
 	User,
@@ -15,6 +16,7 @@ import type { WalletDetails as WalletDetailsType } from '../types';
 import AddInitialBalanceModal from './AddInitialBalanceModal';
 import CreatePaymentModal from './CreatePaymentModal';
 import UpdateCreditCapModal from './UpdateCreditCapModal';
+import UpdateWalletModal from './UpdateWalletModal';
 
 export default function WalletDetails() {
 	const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function WalletDetails() {
 	const [showUpdateCreditCapModal, setShowUpdateCreditCapModal] = useState(false);
 	const [showAddInitialBalanceModal, setShowAddInitialBalanceModal] =
 		useState(false);
+	const [showUpdateWalletModal, setShowUpdateWalletModal] = useState(false);
 
 	useEffect(() => {
 		if (walletId) {
@@ -136,6 +139,13 @@ export default function WalletDetails() {
 							کد: {wallet.customer.code} - جزئیات کیف پول
 						</p>
 					</div>
+					<button
+						onClick={() => setShowUpdateWalletModal(true)}
+						className='px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-reverse space-x-2 font-semibold'
+					>
+						<Edit className='w-5 h-5' />
+						<span>ویرایش کیف پول</span>
+					</button>
 				</div>
 			</div>
 
@@ -358,6 +368,16 @@ export default function WalletDetails() {
 					onClose={() => setShowAddInitialBalanceModal(false)}
 					customerId={wallet.customer.id}
 					onSuccess={handleInitialBalanceAdded}
+				/>
+			)}
+			{showUpdateWalletModal && wallet && (
+				<UpdateWalletModal
+					isOpen={showUpdateWalletModal}
+					onClose={() => setShowUpdateWalletModal(false)}
+					walletId={wallet.id}
+					currentBalance={wallet.balance}
+					currentCreditCap={wallet.credit_cap}
+					onSuccess={fetchWalletDetails}
 				/>
 			)}
 		</div>

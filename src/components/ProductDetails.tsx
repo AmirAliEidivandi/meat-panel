@@ -1,6 +1,7 @@
 import {
 	ArrowRight,
 	Camera,
+	Image,
 	Loader2,
 	Package,
 	RefreshCw,
@@ -10,7 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatCurrency } from '../lib/utils';
-import { fileService, productService } from '../services/api';
+import { fileService, fileUrl, productService } from '../services/api';
 import type { FileUploadResponse, Product } from '../types';
 
 export default function ProductDetails() {
@@ -25,6 +26,7 @@ export default function ProductDetails() {
 	const [description, setDescription] = useState('');
 	const [isSpecial, setIsSpecial] = useState(false);
 	const [isOnline, setIsOnline] = useState(false);
+	const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
 	useEffect(() => {
 		if (productId) {
@@ -334,6 +336,90 @@ export default function ProductDetails() {
 					</div>
 				</div>
 			</div>
+
+			{/* Product Image Gallery */}
+			{product.images && product.images.length > 0 && (
+				<div className='bg-white rounded-xl border border-gray-200 p-6 mb-6'>
+					<div className='flex items-center space-x-reverse space-x-2 mb-5'>
+						<div className='w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center'>
+							<Image className='w-4 h-4 text-blue-600' />
+						</div>
+						<h3 className='font-bold text-gray-900'>
+							تصاویر محصول ({product.images.length})
+						</h3>
+					</div>
+					<div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
+						{product.images.map((image, index) => (
+							<div
+								key={image.id}
+								className='group relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-all cursor-pointer'
+								onClick={() => setSelectedImageIndex(index)}
+							>
+								<img
+									src={fileUrl(image.thumbnail) || fileUrl(image.url) || ''}
+									alt={`${product.title} - تصویر ${index + 1}`}
+									className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-300'
+								/>
+								<div className='absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center'>
+									<Camera className='w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* Image Modal */}
+			{selectedImageIndex !== null && product.images && (
+				<div
+					className='fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4'
+					onClick={() => setSelectedImageIndex(null)}
+				>
+					<div className='relative max-w-4xl max-h-[90vh] w-full'>
+						<button
+							onClick={() => setSelectedImageIndex(null)}
+							className='absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors'
+						>
+							<X className='w-5 h-5 text-gray-900' />
+						</button>
+						<img
+							src={fileUrl(product.images[selectedImageIndex].url) || ''}
+							alt={`${product.title} - تصویر ${selectedImageIndex + 1}`}
+							className='w-full h-full object-contain rounded-lg'
+							onClick={(e) => e.stopPropagation()}
+						/>
+						{product.images.length > 1 && (
+							<div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-reverse space-x-2 bg-white/90 rounded-full px-4 py-2'>
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										setSelectedImageIndex((prev) =>
+											prev! > 0 ? prev! - 1 : product.images.length - 1
+										);
+									}}
+									className='w-8 h-8 bg-gray-900 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-colors'
+								>
+									<ArrowRight className='w-4 h-4' />
+								</button>
+								<span className='text-sm font-semibold text-gray-900 px-3'>
+									{selectedImageIndex + 1} از {product.images.length}
+								</span>
+								<button
+									onClick={(e) => {
+										e.stopPropagation();
+										setSelectedImageIndex((prev) =>
+											prev! < product.images.length - 1 ? prev! + 1 : 0
+										);
+									}}
+									className='w-8 h-8 bg-gray-900 hover:bg-gray-700 text-white rounded-full flex items-center justify-center transition-colors rotate-180'
+								>
+									<ArrowRight className='w-4 h-4' />
+								</button>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 
 			{/* Description */}
 			<div className='bg-white rounded-xl border border-gray-200 p-6 mb-6'>

@@ -1,4 +1,4 @@
-import { Loader2, Wallet } from 'lucide-react';
+import { Edit, Loader2, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatDate } from '../lib/utils';
@@ -9,6 +9,7 @@ import type {
 	WalletListItem,
 } from '../types';
 import Pagination from './Pagination';
+import UpdateWalletModal from './UpdateWalletModal';
 
 // Helper functions for Persian labels
 const getCategoryText = (category: string): string => {
@@ -51,6 +52,8 @@ export default function WalletsList() {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [customerFilter, setCustomerFilter] = useState('');
 	const [customers, setCustomers] = useState<CustomerListItem[]>([]);
+	const [showUpdateWalletModal, setShowUpdateWalletModal] = useState(false);
+	const [selectedWallet, setSelectedWallet] = useState<WalletListItem | null>(null);
 
 	useEffect(() => {
 		fetchWallets();
@@ -291,15 +294,28 @@ export default function WalletsList() {
 											{formatDate(wallet.created_at)}
 										</td>
 										<td className='px-4 py-4 text-center'>
-											<button
-												onClick={e => {
-													e.stopPropagation();
-													navigate(`/manage/wallets/${wallet.id}`);
-												}}
-												className='px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-semibold'
-											>
-												مشاهده
-											</button>
+											<div className='flex items-center justify-center space-x-reverse space-x-2'>
+												<button
+													onClick={e => {
+														e.stopPropagation();
+														setSelectedWallet(wallet);
+														setShowUpdateWalletModal(true);
+													}}
+													className='p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors'
+													title='ویرایش کیف پول'
+												>
+													<Edit className='w-5 h-5' />
+												</button>
+												<button
+													onClick={e => {
+														e.stopPropagation();
+														navigate(`/manage/wallets/${wallet.id}`);
+													}}
+													className='px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-semibold'
+												>
+													مشاهده
+												</button>
+											</div>
 										</td>
 									</tr>
 								))}
@@ -329,6 +345,25 @@ export default function WalletsList() {
 					itemsPerPage={pageSize}
 					totalPages={Math.ceil(totalCount / pageSize)}
 					onPageChange={handlePageChange}
+				/>
+			)}
+
+			{/* Update Wallet Modal */}
+			{showUpdateWalletModal && selectedWallet && (
+				<UpdateWalletModal
+					isOpen={showUpdateWalletModal}
+					onClose={() => {
+						setShowUpdateWalletModal(false);
+						setSelectedWallet(null);
+					}}
+					walletId={selectedWallet.id}
+					currentBalance={selectedWallet.balance}
+					currentCreditCap={selectedWallet.credit_cap}
+					onSuccess={() => {
+						fetchWallets();
+						setShowUpdateWalletModal(false);
+						setSelectedWallet(null);
+					}}
 				/>
 			)}
 		</div>

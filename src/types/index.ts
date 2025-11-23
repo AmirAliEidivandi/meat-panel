@@ -383,6 +383,7 @@ export interface Product {
   deleted_at: string | null;
   categories?: Category[];
   warehouse?: Warehouse;
+  images: FileSummary[];
 }
 
 export interface UpdateProductRequest {
@@ -3809,4 +3810,9 @@ export interface VerifyTokenResponse {
   time_remaining?: number;
   username?: string;
   error?: string;
+}
+
+export interface UpdateWalletDto {
+  balance?: number;
+  credit_cap?: number;
 }

@@ -118,6 +118,7 @@ import type {
   UpdateProductPricesRequest,
   UpdateProductRequest,
   UpdateProfileSelfDto,
+  UpdateWalletDto,
   VerifyTokenResponse,
   WalletDetails,
   WalletHistory,
@@ -131,8 +132,8 @@ import type {
   ZibalWalletTopupResponse,
 } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_BASE_URL;
-// const API_BASE_URL = "http://localhost:3301";
+// const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+const API_BASE_URL = "http://localhost:3301";
 const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;
 
 // IP address cache
@@ -685,6 +686,18 @@ export const walletService = {
     );
     return response.data;
   },
+  updateWallet: async (
+    walletId: string,
+    data: UpdateWalletDto
+  ): Promise<{
+    success: boolean;
+    message: string;
+    wallet: WalletDetails;
+    balance_changed: boolean;
+  }> => {
+    const response = await api.put(`/wallets/${walletId}`, data);
+    return response.data;
+  },
 };
 
 export const orderService = {
@@ -918,6 +931,17 @@ export const paymentService = {
         },
       }
     );
+    return response.data;
+  },
+  deletePayment: async (
+    paymentId: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    payment: PaymentDetails;
+    wallet_balance: number;
+  }> => {
+    const response = await api.delete(`/payments/${paymentId}`);
     return response.data;
   },
 };
