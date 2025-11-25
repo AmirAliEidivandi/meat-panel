@@ -132,8 +132,8 @@ import type {
   ZibalWalletTopupResponse,
 } from "../types";
 
-// const API_BASE_URL = import.meta.env.VITE_BASE_URL;
-const API_BASE_URL = "http://localhost:3301";
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+// const API_BASE_URL = "http://localhost:3301";
 const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;
 
 // IP address cache
