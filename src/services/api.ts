@@ -43,6 +43,7 @@ import type {
   GetFavoriteProductsResponse,
   GetMyCartResponse,
   GetProductKardexResponse,
+  GetReturnRequestsResponse,
   GetSellersResponse,
   GroupsListResponse,
   GroupsListWithClientIdResponse,
@@ -93,6 +94,7 @@ import type {
   QueryPublicDto,
   QueryReceivingDto,
   QueryReminderDto,
+  QueryReturnRequestsDto,
   QueryTicketDto,
   QueryWalletDto,
   QueryWalletHistoryDto,
@@ -103,6 +105,7 @@ import type {
   ReplyTicketDto,
   ReturnedOrdersReportStats,
   ReturnedProductsReportStats,
+  ReturnRequestDetailsResponse,
   SellerReportStats,
   TicketCreatedResponse,
   TicketDetails,
@@ -642,6 +645,25 @@ export const capillarySalesLineService = {
     id: string
   ): Promise<CapillarySalesLineDetails> => {
     const response = await api.get(`/capillary-sales-lines/${id}`);
+    return response.data;
+  },
+};
+
+export const returnRequestService = {
+  getAllReturnRequests: async (
+    query?: QueryReturnRequestsDto
+  ): Promise<GetReturnRequestsResponse> => {
+    const response = await api.get("/return-requests", {
+      params: {
+        ...query,
+      },
+    });
+    return response.data;
+  },
+  getReturnRequestById: async (
+    id: string
+  ): Promise<ReturnRequestDetailsResponse> => {
+    const response = await api.get(`/return-requests/${id}`);
     return response.data;
   },
 };

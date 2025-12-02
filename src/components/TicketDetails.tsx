@@ -510,7 +510,7 @@ export default function TicketDetails() {
 								خط فروش:
 							</span>
 							<span className='text-sm font-semibold text-gray-900'>
-								{ticket.customer.capillary_sales_line.title}
+								{ticket.customer?.capillary_sales_line?.title || 'نامشخص'}
 							</span>
 						</div>
 					</div>

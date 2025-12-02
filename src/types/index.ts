@@ -1168,7 +1168,7 @@ export interface TicketDetails {
       id: string;
       line_number: number;
       title: string;
-    };
+    } | null;
   };
   creator_person: {
     id: string;
@@ -3815,4 +3815,77 @@ export interface VerifyTokenResponse {
 export interface UpdateWalletDto {
   balance?: number;
   credit_cap?: number;
+}
+
+export interface QueryReturnRequestsDto {
+  page?: number;
+  "page-size"?: number;
+  status?: string;
+  customer_id?: string;
+  request_id?: string;
+}
+
+export interface GetReturnRequestsResponse {
+  count: number;
+  data: {
+    id: string;
+    status: string;
+    created_at: string;
+    reason: string;
+    customer: {
+      id: string;
+      title: string;
+      code: number;
+    };
+    order: {
+      id: string;
+      code: number;
+      address: string;
+    };
+    return_items_count: number;
+    request: {
+      id: string;
+      code: number;
+      status: string;
+      address: string | null;
+    };
+  }[];
+}
+
+export interface ReturnRequestDetailsResponse {
+  id: string;
+  reason: string;
+  description: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  customer: {
+    id: string;
+    title: string;
+    code: number;
+  };
+  order: {
+    id: string;
+    code: number;
+    address: string;
+    created_at: string;
+    step: string;
+  };
+  request: {
+    id: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    code: number;
+    address: string | null;
+    payment_method: string;
+  };
+  return_items: {
+    request_item_id: string;
+    product_id: string;
+    product_title: string;
+    weight: number;
+    online_price: number;
+    total_price: number;
+  };
 }
