@@ -676,6 +676,45 @@ export default function OrderDetails() {
         </div>
       )}
 
+      {/* Order Creator */}
+      {order.creator && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center space-x-reverse space-x-2 mb-5">
+            <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center">
+              <User className="w-4 h-4 text-cyan-600" />
+            </div>
+            <h3 className="font-bold text-gray-900">ایجادکننده سفارش</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1.5">نام</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {order.creator.profile.first_name}{" "}
+                {order.creator.profile.last_name}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1.5">کد کاربری</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {order.creator.profile.kid}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1.5">نام کاربری</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {order.creator.profile.username}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1.5">موبایل</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {order.creator.profile.mobile}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Ordered Products */}
       {(order.ordered_basket || []).length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">

@@ -1079,11 +1079,16 @@ export interface OrderDetails {
   ordered_basket: OrderBasketItem[];
   failed_basket: FailedBasketItem[];
   cargos: OrderCargo[];
+  is_online: boolean;
   creator?: {
     id: string;
     profile: {
+      id: string;
+      kid: string;
       first_name: string;
       last_name: string;
+      mobile: string;
+      username: string;
     };
   };
 }
