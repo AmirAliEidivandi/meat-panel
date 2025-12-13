@@ -42,6 +42,8 @@ import Products from "./components/Products";
 import ProfileDetails from "./components/ProfileDetails";
 import ReceivingDetails from "./components/ReceivingDetails";
 import ReceivingsList from "./components/ReceivingsList";
+import FollowUpDetails from "./components/FollowUpDetails";
+import FollowUpsList from "./components/FollowUpsList";
 import ReminderDetails from "./components/ReminderDetails";
 import RemindersList from "./components/RemindersList";
 import ReturnRequestDetails from "./components/ReturnRequestDetails";
@@ -214,6 +216,10 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           {/* Reminders */}
           <Route path="reminders" element={<RemindersList />} />
           <Route path="reminders/:id" element={<ReminderDetails />} />
+
+          {/* Follow-ups */}
+          <Route path="follow-ups" element={<FollowUpsList />} />
+          <Route path="follow-ups/:id" element={<FollowUpDetails />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/manage/orders" replace />} />

@@ -39,8 +39,11 @@ import type {
   Employee,
   EmployeeInfoResponse,
   FileUploadResponse,
+  FollowUpDetails,
   GetCapillarySalesLinesResponse,
+  GetCustomerInformationResponse,
   GetFavoriteProductsResponse,
+  GetFollowUpsResponse,
   GetMyCartResponse,
   GetProductKardexResponse,
   GetReturnRequestsResponse,
@@ -83,6 +86,7 @@ import type {
   QueryCheckDto,
   QueryCustomerDto,
   QueryCustomerTransactionDto,
+  QueryFollowUp,
   QueryInvoiceDto,
   QueryInvoiceHistoryDto,
   QueryLogDto,
@@ -626,6 +630,27 @@ export const customerService = {
         capillary_sales_line_id: capillarySalesLineId,
       }
     );
+    return response.data;
+  },
+  getCustomerInformation: async (
+    customerId: string
+  ): Promise<GetCustomerInformationResponse> => {
+    const response = await api.get(`/customers/${customerId}/information`);
+    return response.data;
+  },
+};
+
+export const followUpService = {
+  getFollowUps: async (query: QueryFollowUp): Promise<GetFollowUpsResponse> => {
+    const response = await api.get("/follow-ups", {
+      params: {
+        ...query,
+      },
+    });
+    return response.data;
+  },
+  getFollowUpById: async (id: string): Promise<FollowUpDetails> => {
+    const response = await api.get(`/follow-ups/${id}`);
     return response.data;
   },
 };

@@ -1080,7 +1080,7 @@ export interface OrderDetails {
   failed_basket: FailedBasketItem[];
   cargos: OrderCargo[];
   is_online: boolean;
-  creator?: {
+  order_creator?: {
     id: string;
     profile: {
       id: string;
@@ -3892,5 +3892,132 @@ export interface ReturnRequestDetailsResponse {
     weight: number;
     online_price: number;
     total_price: number;
+  };
+}
+
+export interface QueryFollowUp {
+  page?: number;
+  "page-size"?: number;
+  employee_id?: string;
+  capillary_sales_line_id?: string;
+}
+
+export interface GetFollowUpsResponse {
+  count: number;
+  data: {
+    id: string;
+    description: string;
+    attempt: number;
+    result: "CUSTOMER" | "NOT_CUSTOMER" | "REQUIRES_FOLLOW_UP" | "NOT_ANSWERED";
+    employee: {
+      id: string;
+      profile: {
+        id: string;
+        kid: string;
+        first_name: string;
+        last_name: string;
+      };
+    };
+    customer: {
+      id: string;
+      title: string;
+      code: number;
+    };
+    created_at: Date;
+    updated_at: Date;
+  }[];
+}
+
+export interface FollowUpDetails {
+  id: string;
+  description: string;
+  result: "CUSTOMER" | "NOT_CUSTOMER" | "REQUIRES_FOLLOW_UP" | "NOT_ANSWERED";
+  attempt: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  customer: {
+    id: string;
+    title: string;
+    type: "PERSONAL" | "ORGANIZATIONAL";
+    category: string;
+    code: number;
+    hp_code: number;
+    hp_title: string | null;
+    is_verified: boolean;
+    is_online: boolean;
+    phone: string | null;
+    address: string | null;
+  };
+  employee: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+    };
+  };
+}
+
+export interface GetCustomerInformationResponse {
+  customer_id: string;
+  title: string;
+  type: string;
+  category: string;
+  credibility: string;
+  address: string;
+  phone: string;
+  age: number;
+  wallet: {
+    balance: number;
+    credit_limit: number;
+    debt_amount: number;
+  };
+  order_statistics: {
+    total_orders: number;
+    successful_orders: number;
+    failed_orders: number;
+    total_purchase_amount: number;
+    average_order_value: number;
+    last_order_date: Date;
+    first_order_date: Date;
+  };
+  payment_statistics: {
+    total_payments: number;
+    total_paid_amount: number;
+    average_payment_amount: number;
+    last_payment_date: Date;
+  };
+  most_purchased_product: {
+    product_id: string;
+    product_title: string;
+    total_quantity: number;
+    total_amount: number;
+    current_inventory: number;
+  };
+  top_products: Array<{
+    product_id: string;
+    product_title: string;
+    total_quantity: number;
+    total_amount: number;
+    order_count: number;
+  }>;
+  behavior_analysis: {
+    purchase_frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "IRREGULAR"; // daily, weekly, monthly, irregular
+    preferred_payment_method:
+      | "CASH"
+      | "ONLINE"
+      | "WALLET"
+      | "CREDIT"
+      | "CHEQUE";
+    average_order_interval_days: number;
+    seasonal_patterns: string[];
+  };
+  recent_activity: {
+    last_30_days_orders: number;
+    last_30_days_amount: number;
+    last_30_days_payments: number;
+    activity_trend: "INCREASING" | "DECREASING" | "STABLE"; // increasing, decreasing, stable
   };
 }

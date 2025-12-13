@@ -13,6 +13,7 @@ import {
   Menu,
   MessageSquare,
   Package,
+  PhoneCall,
   Receipt,
   ShoppingCart,
   TrendingUp,
@@ -248,6 +249,13 @@ const menuItems: MenuItem[] = [
     icon: Bell,
     color: "text-emerald-600",
     path: "/manage/reminders",
+  },
+  {
+    id: "follow-ups",
+    label: "پیگیری‌ها",
+    icon: PhoneCall,
+    color: "text-blue-600",
+    path: "/manage/follow-ups",
   },
 ];
 
