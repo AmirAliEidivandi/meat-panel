@@ -922,6 +922,7 @@ export interface Order {
   answered: boolean;
   call_duration: number;
   bought: boolean;
+  is_online: boolean;
   not_purchased_reason: string | null;
   settlements: OrderSettlement[];
   delivery_date: string;
@@ -4020,4 +4021,49 @@ export interface GetCustomerInformationResponse {
     last_30_days_payments: number;
     activity_trend: "INCREASING" | "DECREASING" | "STABLE"; // increasing, decreasing, stable
   };
+}
+
+export interface CreateProfileDto {
+  first_name: string;
+  last_name: string;
+  email: string;
+  gender: "MALE" | "FEMALE";
+  mobile: string;
+  groups: string[];
+  enabled: boolean;
+  birth_date?: string;
+  national_code?: string;
+  username?: string;
+  capillary_sales_line_ids?: string[];
+}
+
+export interface GetGroupsResponse {
+  data: {
+    id: string;
+    name: string;
+    path: string;
+    attributes: {
+      client: string[];
+    };
+    clientRoles: Record<string, string[]>;
+    roles: { id: string; name: string }[];
+    clientId: string;
+  }[];
+  success: boolean;
+  msg: string;
+  count: number;
+}
+
+export interface UpdateProfileDto {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  gender?: "MALE" | "FEMALE";
+  mobile?: string;
+  groups?: string[];
+  enabled?: boolean;
+  birth_date?: string;
+  national_code?: string;
+  username?: string;
+  capillary_sales_line_ids?: string[];
 }

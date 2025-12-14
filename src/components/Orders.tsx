@@ -1,4 +1,4 @@
-import { Archive, Loader2, Plus, ShoppingCart } from "lucide-react";
+import { Archive, Loader2, Plus, Printer, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "../lib/utils";
@@ -68,6 +68,17 @@ const getDeliveryMethodText = (method: string): string => {
   return methodMap[method] || method;
 };
 
+const canGenerateInvoice = (step: string): boolean => {
+  const invoiceEligibleSteps = [
+    "CARGO",
+    "PARTIALLY_DELIVERED",
+    "DELIVERED",
+    "RETURNED",
+    "PARTIALLY_RETURNED",
+  ];
+  return invoiceEligibleSteps.includes(step);
+};
+
 export default function Orders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -82,6 +93,9 @@ export default function Orders() {
   const [customers, setCustomers] = useState<CustomerListItem[]>([]);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
   const [archivingOrderId, setArchivingOrderId] = useState<string | null>(null);
+  const [generatingInvoiceId, setGeneratingInvoiceId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     fetchOrders();
@@ -130,6 +144,34 @@ export default function Orders() {
     }
   };
 
+  const handleGenerateInvoice = async (orderId: string) => {
+    try {
+      setGeneratingInvoiceId(orderId);
+      setError("");
+      const blob = await orderService.customerInvoice(orderId);
+
+      // ایجاد URL برای blob
+      const url = window.URL.createObjectURL(blob);
+
+      // باز کردن PDF در تب جدید
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // آزاد کردن URL بعد از استفاده
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (err: any) {
+      console.error("Error generating invoice:", err);
+      setError(err.response?.data?.message || "خطا در صدور فاکتور");
+    } finally {
+      setGeneratingInvoiceId(null);
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
     setCurrentPage(page);
@@ -152,8 +194,6 @@ export default function Orders() {
     if (filters.step) count++;
     if (filters.payment_status) count++;
     if (filters.delivery_method) count++;
-    if (filters.bought !== undefined) count++;
-    if (filters.fulfilled !== undefined) count++;
     if (filters.archived !== undefined) count++;
     if (filters.date_from) count++;
     if (filters.date_to) count++;
@@ -323,10 +363,7 @@ export default function Orders() {
                     روش ارسال
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
-                    خریداری شده
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
-                    تحویل شده
+                    وضعیت
                   </th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
                     عملیات
@@ -373,19 +410,16 @@ export default function Orders() {
                     <td className="px-4 py-4 text-sm text-gray-700">
                       {getDeliveryMethodText(order.delivery_method)}
                     </td>
-                    <td className="px-4 py-4 text-center">
-                      {order.bought ? (
-                        <span className="text-green-600 font-semibold">✓</span>
-                      ) : (
-                        <span className="text-red-600 font-semibold">✗</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      {order.fulfilled ? (
-                        <span className="text-green-600 font-semibold">✓</span>
-                      ) : (
-                        <span className="text-yellow-600 font-semibold">-</span>
-                      )}
+                    <td className="px-4 py-4">
+                      <span
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          order.is_online
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {order.is_online ? "آنلاین" : "آفلاین"}
+                      </span>
                     </td>
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center space-x-reverse space-x-2">
@@ -398,6 +432,23 @@ export default function Orders() {
                         >
                           مشاهده
                         </button>
+                        {canGenerateInvoice(order.step) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerateInvoice(order.id);
+                            }}
+                            disabled={generatingInvoiceId === order.id}
+                            className="p-2 rounded-lg transition-colors text-sm font-semibold flex items-center justify-center disabled:opacity-50 bg-green-100 text-green-700 hover:bg-green-200"
+                            title="صدور فاکتور"
+                          >
+                            {generatingInvoiceId === order.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Printer className="w-4 h-4" />
+                            )}
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

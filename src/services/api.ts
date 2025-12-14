@@ -23,6 +23,7 @@ import type {
   CreateOrderFromRequestDto,
   CreatePaymentDto,
   CreatePaymentResponse,
+  CreateProfileDto,
   CreateReminderDto,
   CreateReminderResponse,
   CreateReturnCargoDto,
@@ -44,6 +45,7 @@ import type {
   GetCustomerInformationResponse,
   GetFavoriteProductsResponse,
   GetFollowUpsResponse,
+  GetGroupsResponse,
   GetMyCartResponse,
   GetProductKardexResponse,
   GetReturnRequestsResponse,
@@ -124,6 +126,7 @@ import type {
   UpdatePersonSelfDto,
   UpdateProductPricesRequest,
   UpdateProductRequest,
+  UpdateProfileDto,
   UpdateProfileSelfDto,
   UpdateWalletDto,
   VerifyTokenResponse,
@@ -139,8 +142,8 @@ import type {
   ZibalWalletTopupResponse,
 } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_BASE_URL;
-// const API_BASE_URL = "http://localhost:3301";
+// const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+const API_BASE_URL = "http://localhost:3301";
 const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;
 
 // IP address cache
@@ -819,6 +822,12 @@ export const orderService = {
     });
     return response.data;
   },
+  customerInvoice: async (orderId: string): Promise<Blob> => {
+    const response = await api.get(`/orders/customer-invoice/${orderId}`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
 };
 
 export const cargoService = {
@@ -1046,6 +1055,10 @@ export const ticketService = {
 };
 
 export const profileService = {
+  createProfile: async (data: CreateProfileDto): Promise<ProfileDetails> => {
+    const response = await api.post("/profiles", data);
+    return response.data;
+  },
   getProfileDetails: async (profileId: string): Promise<ProfileDetails> => {
     const response = await api.get(`/profiles/${profileId}`);
     return response.data.data[0];
@@ -1089,6 +1102,24 @@ export const profileService = {
   },
   getRoles: async (): Promise<string[]> => {
     const response = await api.get("/profiles/roles");
+    return response.data;
+  },
+  updateProfile: async (
+    profileId: string,
+    data: UpdateProfileDto
+  ): Promise<ProfileDetails> => {
+    const response = await api.put(`/profiles/${profileId}`, data);
+    return response.data;
+  },
+};
+
+export const groupService = {
+  getGroups: async (): Promise<GetGroupsResponse> => {
+    const response = await api.get("/groups", {
+      params: {
+        "page-size": 100,
+      },
+    });
     return response.data;
   },
 };
