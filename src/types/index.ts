@@ -4067,3 +4067,181 @@ export interface UpdateProfileDto {
   username?: string;
   capillary_sales_line_ids?: string[];
 }
+
+export interface GetWithdrawalRequestsResponse {
+  data: {
+    id: string;
+    created_at: Date;
+    status:
+      | "PENDING"
+      | "APPROVED"
+      | "REJECTED"
+      | "COMPLETED"
+      | "CANCELLED"
+      | "REVIEWING"
+      | "PROCESSING";
+    customer: {
+      id: string;
+      title: string;
+      code: number;
+    };
+    amount: number;
+  }[];
+  count: number;
+}
+
+export interface GetWithdrawalRequestDetailsResponse {
+  id: string;
+  created_at: Date;
+  status:
+    | "PENDING" // در انتظار بررسی
+    | "APPROVED" // تایید شده
+    | "REJECTED" // رد شده
+    | "COMPLETED" // تکمیل شده
+    | "CANCELLED" // لغو شده
+    | "REVIEWING" // در حال بررسی
+    | "PROCESSING"; // در حال پردازش
+  customer: {
+    id: string;
+    title: string;
+    code: number;
+  };
+  amount: number;
+  representative_name: string;
+  person: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+      mobile: string;
+      username: string;
+    };
+  };
+  requested_at: Date;
+  reviewed_at: Date;
+  reject_reason: string;
+  bank_card: {
+    id: string;
+    is_verified: boolean;
+    bank_name: string;
+  };
+  reviewed_by_employee: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+      mobile: string;
+      username: string;
+    };
+  };
+  processed_by_employee: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+      mobile: string;
+      username: string;
+    };
+  };
+}
+
+export interface QueryWithdrawalRequestDto {
+  page?: number;
+  "page-size"?: number;
+  customer_id?: string;
+  status?: string;
+}
+
+export interface QueryBankCardsDto {
+  page?: number;
+  "page-size"?: number;
+  person_id?: string;
+  created_type?: "CUSTOMER" | "EMPLOYEE";
+  employee_id?: string;
+  customer_id?: string;
+}
+
+export interface BankCardsResponse {
+  data: {
+    id: string;
+    is_verified: boolean;
+    bank_name: string;
+    iban: string;
+    masked_pan: string;
+    created_at: Date;
+    person: {
+      id: string;
+      profile: {
+        id: string;
+        kid: string;
+        first_name: string;
+        last_name: string;
+        mobile: string;
+        username: string;
+      };
+    } | null;
+    account_number: string;
+    created_type: "CUSTOMER" | "EMPLOYEE";
+    employee: {
+      id: string;
+      profile: {
+        id: string;
+        kid: string;
+        first_name: string;
+        last_name: string;
+        mobile: string;
+        username: string;
+      };
+    } | null;
+    customer: {
+      id: string;
+      title: string;
+      code: number;
+    } | null;
+  }[];
+  count: number;
+}
+
+export interface BankCardDetailsResponse {
+  id: string;
+  is_verified: boolean;
+  bank_name: string;
+  iban: string;
+  masked_pan: string;
+  created_at: Date;
+  person: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+      mobile: string;
+      username: string;
+    };
+  } | null;
+  account_number: string;
+  created_type: "CUSTOMER" | "EMPLOYEE";
+  employee: {
+    id: string;
+    profile: {
+      id: string;
+      kid: string;
+      first_name: string;
+      last_name: string;
+      mobile: string;
+      username: string;
+    };
+  } | null;
+  customer: {
+    id: string;
+    title: string;
+    code: number;
+  } | null;
+}

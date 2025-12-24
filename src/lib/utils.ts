@@ -134,3 +134,46 @@ export function parseFormattedNumber(value: string): number {
 	const parsed = parseFloat(cleaned);
 	return isNaN(parsed) ? 0 : parsed;
 }
+
+// Get Persian name for bank code
+export function getBankName(bank: string | null | undefined): string {
+	if (!bank) {
+		return 'N/A';
+	}
+
+	const bankMap: Record<string, string> = {
+		SEPAH: 'بانک سپه',
+		MELLI: 'بانک ملی',
+		TEJARAT: 'بانک تجارت',
+		REFAH: 'بانک رفاه',
+		MASKAN: 'بانک مسکن',
+		KESHAVARZI: 'بانک کشاورزی',
+		SANAT_VA_MADAN: 'بانک صنعت و معدن',
+		POST_BANK: 'پست بانک',
+		MELLAT: 'بانک ملت',
+		SADERAT: 'بانک صادرات',
+		PARSIAN: 'بانک پارسیان',
+		PASARGAD: 'بانک پاسارگاد',
+		SAMAN: 'بانک سامان',
+		EGHTESAD_NOVIN: 'بانک اقتصاد نوین',
+		DEY: 'بانک دی',
+		KARAFARIN: 'بانک کارآفرین',
+		SINA: 'بانک سینا',
+		SARMAYEH: 'بانک سرمایه',
+		SHAHR: 'بانک شهر',
+		AYANDEH: 'بانک آینده',
+		ANSAR: 'بانک انصار',
+		GARDESHGARI: 'بانک گردشگری',
+		HEKMAT_IRANIAN: 'بانک حکمت ایرانیان',
+		MEHREGAN: 'بانک مهرگان',
+		RESALAT: 'بانک رسالت',
+		KOSAR: 'بانک کوثر',
+		MIDDLE_EAST: 'بانک خاورمیانه',
+		IRAN_ZAMIN: 'بانک ایران زمین',
+		MEHR_EGHTESAD: 'موسسه اعتباری مهر اقتصاد',
+		TOSEE_TAAVON: 'موسسه اعتباری توسعه تعاون',
+		NOOR: 'موسسه اعتباری نور',
+		OTHER: 'سایر',
+	};
+	return bankMap[bank] || bank;
+}

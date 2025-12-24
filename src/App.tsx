@@ -10,6 +10,8 @@ import CapillarySalesLines from "./components/CapillarySalesLines";
 import CargoHistory from "./components/CargoHistory";
 import Categories from "./components/Categories";
 import CategoryDetails from "./components/CategoryDetails";
+import BankCardDetails from "./components/BankCardDetails";
+import BankCardsList from "./components/BankCardsList";
 import CheckDetails from "./components/CheckDetails";
 import ChecksList from "./components/ChecksList";
 import CustomerDetails from "./components/CustomerDetails";
@@ -73,6 +75,8 @@ import WalletHistoryDetails from "./components/WalletHistoryDetails";
 import WalletsList from "./components/WalletsList";
 import WarehouseDetails from "./components/WarehouseDetails";
 import WarehouseList from "./components/WarehouseList";
+import WithdrawalRequestDetails from "./components/WithdrawalRequestDetails";
+import WithdrawalRequestsList from "./components/WithdrawalRequestsList";
 import { authService } from "./services/api";
 
 function AdminPanel({ onLogout }: { onLogout: () => void }) {
@@ -195,6 +199,20 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           {/* Wallet History */}
           <Route path="wallet-history" element={<WalletHistory />} />
           <Route path="wallet-history/:id" element={<WalletHistoryDetails />} />
+
+          {/* Withdrawal Requests */}
+          <Route
+            path="withdrawal-requests"
+            element={<WithdrawalRequestsList />}
+          />
+          <Route
+            path="withdrawal-requests/:id"
+            element={<WithdrawalRequestDetails />}
+          />
+
+          {/* Bank Cards */}
+          <Route path="bank-cards" element={<BankCardsList />} />
+          <Route path="bank-cards/:id" element={<BankCardDetails />} />
 
           {/* Profiles */}
           <Route

@@ -1,6 +1,7 @@
 import {
   Activity,
   AlertCircle,
+  ArrowDownCircle,
   BarChart3,
   Bell,
   ChevronDown,
@@ -205,6 +206,20 @@ const menuItems: MenuItem[] = [
     icon: Wallet,
     color: "text-yellow-600",
     path: "/manage/wallet-history",
+  },
+  {
+    id: "withdrawal-requests",
+    label: "درخواست های برداشت",
+    icon: ArrowDownCircle,
+    color: "text-cyan-600",
+    path: "/manage/withdrawal-requests",
+  },
+  {
+    id: "bank-cards",
+    label: "کارت‌های بانکی",
+    icon: CreditCard,
+    color: "text-indigo-600",
+    path: "/manage/bank-cards",
   },
   {
     id: "profiles",

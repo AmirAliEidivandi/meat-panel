@@ -1,51 +1,13 @@
 import { CreditCard, Loader2, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatCurrency, formatDate } from '../lib/utils';
+import { formatCurrency, formatDate, getBankName } from '../lib/utils';
 import { accountantsService, customerService } from '../services/api';
 import type { CheckListItem, CustomerListItem, QueryCheckDto } from '../types';
 import CreateCheckModal from './CreateCheckModal';
 import Pagination from './Pagination';
 
 // Helper functions for Persian labels
-const getBankName = (bank: string): string => {
-	const bankMap: Record<string, string> = {
-		SEPAH: 'بانک سپه',
-		MELLI: 'بانک ملی',
-		TEJARAT: 'بانک تجارت',
-		REFAH: 'بانک رفاه',
-		MASKAN: 'بانک مسکن',
-		KESHAVARZI: 'بانک کشاورزی',
-		SANAT_VA_MADAN: 'بانک صنعت و معدن',
-		POST_BANK: 'پست بانک',
-		MELLAT: 'بانک ملت',
-		SADERAT: 'بانک صادرات',
-		PARSIAN: 'بانک پارسیان',
-		PASARGAD: 'بانک پاسارگاد',
-		SAMAN: 'بانک سامان',
-		EGHTESAD_NOVIN: 'بانک اقتصاد نوین',
-		DEY: 'بانک دی',
-		KARAFARIN: 'بانک کارآفرین',
-		SINA: 'بانک سینا',
-		SARMAYEH: 'بانک سرمایه',
-		SHAHR: 'بانک شهر',
-		AYANDEH: 'بانک آینده',
-		ANSAR: 'بانک انصار',
-		GARDESHGARI: 'بانک گردشگری',
-		HEKMAT_IRANIAN: 'بانک حکمت ایرانیان',
-		MEHREGAN: 'بانک مهرگان',
-		RESALAT: 'بانک رسالت',
-		KOSAR: 'بانک کوثر',
-		MIDDLE_EAST: 'بانک خاورمیانه',
-		IRAN_ZAMIN: 'بانک ایران زمین',
-		MEHR_EGHTESAD: 'موسسه اعتباری مهر اقتصاد',
-		TOSEE_TAAVON: 'موسسه اعتباری توسعه تعاون',
-		NOOR: 'موسسه اعتباری نور',
-		OTHER: 'سایر',
-	};
-	return bankMap[bank] || bank;
-};
-
 const getCheckStatusText = (status: string): string => {
 	const statusMap: Record<string, string> = {
 		RECEIVED_BY_ACCOUNTING: 'دریافت چک توسط حسابداری',

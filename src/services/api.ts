@@ -7,6 +7,8 @@ import type {
   AddCustomerInitialBalanceResponse,
   AddFavoriteProductDto,
   AddFavoriteProductResponse,
+  BankCardDetailsResponse,
+  BankCardsResponse,
   CapillarySalesLineDetails,
   CargoHistory,
   Category,
@@ -50,6 +52,8 @@ import type {
   GetProductKardexResponse,
   GetReturnRequestsResponse,
   GetSellersResponse,
+  GetWithdrawalRequestDetailsResponse,
+  GetWithdrawalRequestsResponse,
   GroupsListResponse,
   GroupsListWithClientIdResponse,
   InactiveCustomersReportStats,
@@ -83,6 +87,7 @@ import type {
   ProfileListResponse,
   PublicProductDetails,
   PublicProductListResponse,
+  QueryBankCardsDto,
   QueryCapillarySalesLineDto,
   QueryCargoHistoryDto,
   QueryCheckDto,
@@ -104,6 +109,7 @@ import type {
   QueryTicketDto,
   QueryWalletDto,
   QueryWalletHistoryDto,
+  QueryWithdrawalRequestDto,
   Receiving,
   ReceivingListResponse,
   ReminderDetails,
@@ -142,8 +148,8 @@ import type {
   ZibalWalletTopupResponse,
 } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_BASE_URL;
-// const API_BASE_URL = "http://localhost:3301";
+// const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+const API_BASE_URL = "http://localhost:3301";
 const FILE_BASE_URL = import.meta.env.VITE_FILE_BASE_URL;
 
 // IP address cache
@@ -490,6 +496,42 @@ export const warehouseService = {
   },
   getWarehouseById: async (id: string): Promise<WarehouseDetailsResponse> => {
     const response = await api.get(`/warehouses/${id}`);
+    return response.data;
+  },
+};
+
+export const withdrawalRequestService = {
+  getWithdrawalRequests: async (
+    query: QueryWithdrawalRequestDto
+  ): Promise<GetWithdrawalRequestsResponse> => {
+    const response = await api.get("/withdrawal-requests", {
+      params: {
+        ...query,
+      },
+    });
+    return response.data;
+  },
+  getWithdrawalRequestById: async (
+    id: string
+  ): Promise<GetWithdrawalRequestDetailsResponse> => {
+    const response = await api.get(`/withdrawal-requests/${id}`);
+    return response.data;
+  },
+};
+
+export const bankCardService = {
+  getBankCards: async (
+    query: QueryBankCardsDto
+  ): Promise<BankCardsResponse> => {
+    const response = await api.get("/bank-cards", {
+      params: {
+        ...query,
+      },
+    });
+    return response.data;
+  },
+  getBankCardById: async (id: string): Promise<BankCardDetailsResponse> => {
+    const response = await api.get(`/bank-cards/${id}`);
     return response.data;
   },
 };
